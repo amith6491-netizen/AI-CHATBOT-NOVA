@@ -179,6 +179,165 @@ Visit:
 http://localhost:5173/
 ```
 
+## Deployment
+
+This project can be deployed in several ways depending on your goal and hosting budget.
+
+### Option 1: Local development deployment
+
+This is the default setup for the project.
+
+- Run Ollama locally.
+- Start the backend on the machine where the Flask app is running.
+- Run the frontend with Vite.
+- Access the app from `http://localhost:5173/`.
+
+This is the easiest option for testing, learning, and local development.
+
+### Option 2: Single-server production deployment
+
+Use one VPS or physical server to host both the frontend and backend.
+
+1. Install Python, Node.js, and Ollama on the server.
+2. Pull the AI model:
+
+```bash
+ollama pull llama3.2
+```
+
+3. Start the backend:
+
+```bash
+cd BACKEND
+pip install -r requirements.txt
+python pythonserver.py
+```
+
+4. Build the frontend:
+
+```bash
+cd FRONTEND
+npm install
+npm run build
+```
+
+5. Serve the built frontend with a web server such as Nginx or a Node/Vite preview server.
+6. Point the frontend to the backend URL in your app configuration.
+
+This is a good option if you want full control and low hosting cost.
+
+### Option 3: Frontend on static hosting + backend on a server
+
+Split the deployment into two parts:
+
+- Frontend: deploy to Vercel, Netlify, GitHub Pages, or Cloudflare Pages
+- Backend: deploy to Render, Railway, Fly.io, DigitalOcean, Azure App Service, or a VPS
+
+In this setup:
+
+- the frontend is a static React app
+- the backend remains a Python Flask service
+- the frontend calls the backend API at a public URL such as:
+
+```text
+https://your-backend-domain.com/chat
+```
+
+Important: the deployed backend must still be able to reach an Ollama instance. If the backend is not on the same machine as Ollama, make sure the Ollama server is reachable from the deployed environment.
+
+### Option 4: Cloud deployment with managed hosting
+
+Common providers for this app:
+
+- Render
+- Railway
+- Fly.io
+- DigitalOcean App Platform
+- Azure App Service
+- AWS Elastic Beanstalk
+- Heroku (older projects)
+
+Typical steps:
+
+1. Push the project to GitHub.
+2. Create a new app/service in your provider.
+3. Configure build commands for the frontend and backend.
+4. Set environment variables such as:
+
+```env
+OLLAMA_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=llama3.2
+```
+
+5. Start the backend process and deploy the frontend build.
+
+This is the most practical option for a production-ready public app.
+
+### Option 5: Docker deployment
+
+You can also deploy with Docker containers.
+
+Typical Docker setup:
+
+- One container for the Flask backend
+- One container for the frontend
+- One container for Ollama
+
+This works well if you want a portable deployment across machines or cloud providers.
+
+Example architecture:
+
+```text
+Browser -> Frontend container -> Backend container -> Ollama container
+```
+
+### Option 6: Self-hosted environment with reverse proxy
+
+For a production environment, you can run the app behind Nginx or Caddy:
+
+- Frontend served on port 80 or 443
+- Backend served on a private/internal port or subdomain
+- Reverse proxy used to route traffic to the correct service
+
+This is a common production setup for company or personal deployments.
+
+### Recommended production workflow
+
+For a robust public deployment:
+
+1. Keep the backend as a Python Flask service.
+2. Build the frontend with Vite.
+3. Serve the frontend from a static host or CDN.
+4. Deploy the backend on a server that can access Ollama.
+5. Use environment variables for model and API URL settings.
+6. Add a reverse proxy or TLS certificate for HTTPS.
+
+### Production example commands
+
+Backend:
+
+```bash
+cd BACKEND
+pip install -r requirements.txt
+gunicorn pythonserver:app --bind 0.0.0.0:5000
+```
+
+Frontend:
+
+```bash
+cd FRONTEND
+npm install
+npm run build
+npm run preview -- --host 0.0.0.0
+```
+
+### Deployment notes
+
+- This project currently depends on Ollama, so the model must be installed and accessible in the deployment environment.
+- If the backend is running on a remote server, make sure the Ollama service is reachable over the network.
+- Update the backend `.env` file or cloud environment variables to match the actual deployment URL and model name.
+- The frontend should send requests to the backend domain, not to `localhost`, when deployed outside of a local machine.
+
 ## How the app works
 
 1. The user types a message in the React chat UI.
