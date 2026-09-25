@@ -273,6 +273,97 @@ OLLAMA_MODEL=llama3.2
 
 This is the most practical option for a production-ready public app.
 
+### Render deployment (specific guide)
+
+Render is a good option for hosting the backend and frontend separately.
+
+#### 1. Push the project to GitHub
+
+Upload the repository to GitHub before creating services on Render.
+
+#### 2. Deploy the Flask backend
+
+Create a new Web Service on Render.
+
+Settings:
+
+- Repository: your GitHub repo
+- Root Directory: `BACKEND`
+- Build Command:
+
+```bash
+pip install -r requirements.txt
+```
+
+- Start Command:
+
+```bash
+gunicorn pythonserver:app --bind 0.0.0.0:$PORT
+```
+
+- Environment Variables:
+
+```env
+OLLAMA_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=llama3.2
+```
+
+Important:
+
+- This project expects Ollama to be reachable from the backend.
+- On Render, the backend cannot usually access a local Ollama instance running on your own laptop.
+- You need either:
+  - a separate Ollama-hosted service or
+  - another machine/server where Ollama is running and reachable over the network.
+
+#### 3. Deploy the React frontend
+
+Create a second service on Render as a Static Site.
+
+Settings:
+
+- Repository: same GitHub repo
+- Root Directory: `FRONTEND`
+- Build Command:
+
+```bash
+npm install
+npm run build
+```
+
+- Publish Directory:
+
+```bash
+dist
+```
+
+- Environment Variable:
+
+```env
+VITE_API_URL=https://your-backend-service-name.onrender.com
+```
+
+#### 4. Update the frontend API URL
+
+In the React app, the frontend uses:
+
+```js
+import.meta.env.VITE_API_URL || "http://localhost:5000"
+```
+
+When deployed, set `VITE_API_URL` to the public Render backend URL so the frontend calls the hosted API instead of localhost.
+
+#### 5. Test the deployment
+
+- Open the frontend URL from Render
+- Send a message from the chat UI
+- Confirm the frontend calls the backend service
+- Confirm the backend reaches Ollama successfully
+
+#### Render deployment note
+
+This app is designed around local Ollama usage, so Render deployment works best when the backend can reach a real Ollama endpoint from the cloud environment. If you do not have a remote Ollama service available, the app will not fully work on Render.
+
 ### Option 5: Docker deployment
 
 You can also deploy with Docker containers.
