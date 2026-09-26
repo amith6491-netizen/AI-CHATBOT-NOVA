@@ -106,9 +106,13 @@ export default function AIChatbot() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/chat`, {
+      const baseUrl = import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ""
+        ? import.meta.env.VITE_API_URL
+        : (typeof window !== "undefined" && window.location.port === "5173" ? "http://localhost:5000" : "");
+      const response = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         }),

@@ -1,0 +1,36 @@
+# Git
+.git
+.github
+.gitignore
+
+# Environments and Secrets
+.env
+.env.*
+!.env.example
+
+# Node / Frontend
+node_modules
+dist
+dist-ssr
+npm-debug.log*
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+env
+*.egg-info
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.sw?
+
+# Documentation & Misc
+*.md
+!README.md
+LICENSE

@@ -1,0 +1,35 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets and local configurations
+.env
+.env.*
+!.env.example
+
+# Git & IDEs
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+*.sw?
+.DS_Store
+Thumbs.db

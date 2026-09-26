@@ -26,10 +26,11 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         if not data or not isinstance(data.get("messages"), list) or not data["messages"]:
-            return jsonify({"error": "No messages provided"}), 400
+            return jsonify({"error": "No messages provided or invalid JSON"}), 400
+
 
         messages = data["messages"][-20:]
         if any(
@@ -41,16 +42,25 @@ def chat():
         ):
             return jsonify({"error": "Messages must contain user or assistant roles and non-empty content."}), 400
 
+        ollama_url = os.getenv("OLLAMA_URL", OLLAMA_URL)
+        ollama_model = os.getenv("OLLAMA_MODEL", OLLAMA_MODEL)
+
         payload = json.dumps({
-            "model": OLLAMA_MODEL,
+            "model": ollama_model,
             "stream": False,
             "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *messages],
             "options": {"num_predict": 1000},
         }).encode("utf-8")
+
+        headers = {"Content-Type": "application/json"}
+        api_key = os.getenv("OLLAMA_API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
         ollama_request = UrlRequest(
-            OLLAMA_URL,
+            ollama_url,
             data=payload,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST",
         )
         with urlopen(ollama_request, timeout=120) as response:
@@ -62,8 +72,9 @@ def chat():
         return jsonify({"reply": reply})
 
     except HTTPError as error:
+        current_model = os.getenv("OLLAMA_MODEL", OLLAMA_MODEL)
         if error.code == 404:
-            return jsonify({"error": f"Ollama model '{OLLAMA_MODEL}' is not installed. Run: ollama pull {OLLAMA_MODEL}"}), 503
+            return jsonify({"error": f"Ollama model '{current_model}' is not installed. Run: ollama pull {current_model}"}), 503
         return jsonify({"error": "Ollama rejected the request. Check that the selected model is installed."}), 502
     except URLError:
         return jsonify({"error": "Ollama is not running. Start Ollama, then try again."}), 503
@@ -75,5 +86,7 @@ def chat():
 
 
 if __name__ == "__main__":
-    print("🚀 NOVA backend starting on http://localhost:5000")
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 5000))
+    host = os.getenv("HOST", "0.0.0.0")
+    print(f"🚀 NOVA backend starting on http://{host}:{port}")
+    app.run(host=host, port=port)

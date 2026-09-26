@@ -508,25 +508,130 @@ This project is a simple AI chatbot app using:
 
 It is a clean example of how to build a local AI chatbot without depending on a paid external model provider.
 
-## Quick start
+## 🐳 Docker Deployment & Containerization
 
+The project is fully containerized using Docker and Docker Compose. You can run the entire stack (Backend + Frontend) with a single command.
+
+### Architecture in Docker
+```
++--------------------------------------------------------------------------+
+|  User Browser (http://localhost:3000)                                    |
++--------------------------------------------------------------------------+
+       |                                              |
+       | (Static Files & Proxied /chat)               | (Optional Direct API)
+       v                                              v
++-----------------------------+               +----------------------------+
+| Frontend Container (Nginx)  |               | Backend Container (Flask)  |
+| - Serves React production   | -- /chat ---> | - Port 5000 (Gunicorn)     |
+|   build on port 80 (->3000) |  (Internal)   | - Non-root appuser         |
+| - Reverse proxies /chat     |               | - Health checked           |
++-----------------------------+               +----------------------------+
+                                                             |
+                                                             | (host.docker.internal:11434)
+                                                             v
+                                              +----------------------------+
+                                              | Host Machine (Ollama)      |
+                                              | - llama3.2 LLM Runtime     |
+                                              +----------------------------+
+```
+
+### Prerequisites
+1. [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/) (Docker Desktop on Windows/macOS, or Docker Engine + Compose plugin on Linux).
+2. [Ollama](https://ollama.com/) running on your host machine with your desired model installed:
+   ```bash
+   ollama pull llama3.2
+   ```
+
+### Environment Variables
+Configure your stack by creating a `.env` file in the root directory:
+```bash
+cp .env.example .env
+```
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `BACKEND_PORT` | `5000` | Port on host mapped to Flask backend |
+| `FRONTEND_PORT` | `3000` | Port on host mapped to React/Nginx frontend |
+| `OLLAMA_URL` | `http://host.docker.internal:11434/api/chat` | URL for Ollama chat API endpoint |
+| `OLLAMA_MODEL` | `llama3.2` | Local model name installed in Ollama |
+| `OLLAMA_API_KEY` | *(empty)* | Optional API key for Ollama Cloud or external AI proxy |
+| `VITE_API_URL` | *(empty)* | Optional direct API URL. Leave empty to use Nginx reverse proxy |
+
+> [!NOTE]
+> `host.docker.internal` allows Docker containers to securely connect back to services running on your host machine (such as Ollama on port 11434).
+
+### How to Build & Run
+To build the Docker images and start all containers in the background:
+```bash
+docker compose up -d --build
+```
+
+Once started:
+- **Frontend Chat Interface**: [http://localhost:3000](http://localhost:3000)
+- **Backend API Status**: [http://localhost:5000/](http://localhost:5000/)
+
+### How to Stop
+To cleanly stop all running containers:
+```bash
+docker compose down
+```
+
+### How to View Logs
+View combined real-time logs for all services:
+```bash
+docker compose logs -f
+```
+
+View logs for a specific service:
+```bash
+# Backend logs
+docker compose logs -f backend
+
+# Frontend logs
+docker compose logs -f frontend
+```
+
+### How to Rebuild
+If you modify source code or dependencies, trigger a clean rebuild:
+```bash
+docker compose up -d --build --force-recreate
+```
+
+### Production Deployment
+For production servers (VPS, AWS EC2, DigitalOcean, Hetzner, etc.):
+1. Clone the repository onto your server.
+2. Copy `.env.example` to `.env` and set your production domain/ports.
+3. If using an external/cloud model provider or remote Ollama server, set `OLLAMA_URL` and `OLLAMA_API_KEY` accordingly.
+4. Launch the stack:
+   ```bash
+   docker compose up -d --build
+   ```
+5. *(Recommended)* Put a reverse proxy like Cloudflare, Caddy, or Traefik in front with SSL/TLS certificates pointing to port `3000`.
+
+---
+
+## Manual (Non-Docker) Local Development
+
+If you prefer running without Docker:
+
+### 1. Start Ollama and pull model
 ```powershell
-# 1. Install Ollama and pull model
 ollama pull llama3.2
+```
 
-# 2. Start backend
+### 2. Start backend
+```powershell
 cd BACKEND
 pip install -r requirements.txt
-..\.venv\Scripts\python.exe pythonserver.py
+python pythonserver.py
+```
 
-# 3. Start frontend in another terminal
+### 3. Start frontend
+In another terminal:
+```powershell
 cd FRONTEND
 npm install
-npm run dev -- --host 0.0.0.0
+npm run dev
 ```
 
-Then open:
-
-```text
-http://localhost:5173/
-```
+Then open `http://localhost:5173/`.
