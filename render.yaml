@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./BACKEND/Dockerfile
     envVars:
       - key: OLLAMA_URL
-        value: https://api.ollama.run/api/chat
+        value: https:http://172.17.3.149:11434/api/chat
       - key: OLLAMA_MODEL
         value: llama3.2
       - key: PORT
