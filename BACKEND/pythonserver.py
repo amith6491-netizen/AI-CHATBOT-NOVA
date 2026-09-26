@@ -10,7 +10,22 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 app = Flask(__name__)
-CORS(app)  # Allow React frontend to call this backend
+
+# Configure CORS to allow specific origins
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://ai-chatbot-nova-1.onrender.com",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
@@ -23,8 +38,11 @@ Keep responses concise and conversational unless the user asks for detailed expl
 def home():
     return jsonify({"status": "NOVA backend is running ✅"})
 
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
+    if request.method == "OPTIONS":
+        return {}, 200
+    
     try:
         data = request.get_json(silent=True)
 
@@ -89,4 +107,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     host = os.getenv("HOST", "0.0.0.0")
     print(f"🚀 NOVA backend starting on http://{host}:{port}")
-    app.run(host=host, port=port)
+    app.run(host=host, port=port)
