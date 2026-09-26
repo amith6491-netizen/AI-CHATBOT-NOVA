@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: nova-backend
+    env: docker
+    dockerfilePath: ./BACKEND/Dockerfile
+    envVars:
+      - key: OLLAMA_URL
+        value: https://api.ollama.run/api/chat
+      - key: OLLAMA_MODEL
+        value: llama3.2
+      - key: PORT
+        value: 5000
+    ports:
+      - port: 5000
+
+  - type: web
+    name: nova-frontend
+    env: docker
+    dockerfilePath: ./FRONTEND/Dockerfile
+    envVars:
+      - key: VITE_API_URL
+        value: https://nova-backend.onrender.com
+    ports:
+      - port: 80
