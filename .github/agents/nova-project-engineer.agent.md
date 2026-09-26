@@ -1,3 +1,4 @@
+
 ---
 description: "Use when building, debugging, testing, securing, or improving the NOVA AI chatbot across its React/Vite frontend and Flask/Anthropic backend."
 name: "NOVA Project Engineer"
