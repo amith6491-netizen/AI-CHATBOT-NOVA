@@ -1,5 +1,6 @@
 services:
   backend:
+    image: amithbaragi/nova-backend:v2.5
     build:
       context: ./BACKEND
       dockerfile: Dockerfile
@@ -24,6 +25,7 @@ services:
       start_period: 5s
 
   frontend:
+    image: amithbaragi/nova-frontend:v2.5
     build:
       context: ./FRONTEND
       dockerfile: Dockerfile
