@@ -47,7 +47,7 @@ function Message({ msg, isDark }) {
         }}>N</div>
       )}
       <div style={{
-        maxWidth: "calc(100% - 50px)",
+        maxWidth: "85%",
         padding: "13px 18px",
         background: isUser
           ? "linear-gradient(135deg, #3B8FD4, #2A6CB8)"
@@ -86,7 +86,7 @@ function Message({ msg, isDark }) {
 }
 
 export default function AIChatbot() {
-  const { messages, addMessage, clearChat, theme, setTheme } = useChatStore();
+  const { messages, addMessage, clearChat, theme } = useChatStore();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -98,7 +98,9 @@ export default function AIChatbot() {
 
   useEffect(() => {
     const handleResize = () => {
-      setSidebarOpen(window.innerWidth > 768);
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false);
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -160,6 +162,8 @@ export default function AIChatbot() {
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
           30% { transform: translateY(-6px); opacity: 1; }
@@ -181,7 +185,6 @@ export default function AIChatbot() {
           50% { opacity: 1; }
         }
 
-        body { margin: 0; padding: 0; }
         textarea::-webkit-scrollbar { display: none; }
         .messages-area::-webkit-scrollbar { width: 4px; }
         .messages-area::-webkit-scrollbar-track { background: transparent; }
@@ -199,6 +202,7 @@ export default function AIChatbot() {
       <div style={{
         display: "flex",
         height: "100vh",
+        width: "100vw",
         background: isDark ? "#080D1A" : "#f5f5f5",
         fontFamily: "'DM Sans', sans-serif",
         overflow: "hidden",
@@ -233,17 +237,17 @@ export default function AIChatbot() {
             </>
           )}
 
-          {/* Header */}
+          {/* Header - Fixed at top center */}
           <div style={{
-            padding: "16px",
+            padding: "16px 20px",
             borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e5e5e5",
             background: isDark ? "rgba(255,255,255,0.02)" : "#ffffff",
             display: "flex", alignItems: "center", justifyContent: "space-between",
             zIndex: 10,
-            flexWrap: "wrap",
-            gap: "8px",
+            position: "sticky",
+            top: 0,
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: "200px" }}>
+            <div style={{ flex: 1 }}>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 style={{
@@ -257,103 +261,134 @@ export default function AIChatbot() {
               >
                 ☰
               </button>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            </div>
+
+            {/* Center Title */}
+            <div style={{
+              flex: 1,
+              textAlign: "center",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: "12px",
+                background: "linear-gradient(135deg, #63CAB7 0%, #3B8FD4 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 18, fontWeight: 800,
+                color: "#0A0F1E",
+                fontFamily: "'Syne', sans-serif",
+                boxShadow: "0 0 24px rgba(99,202,183,0.4)",
+              }}>N</div>
+              <div>
                 <div style={{
-                  width: 40, height: 40, borderRadius: "12px",
-                  background: "linear-gradient(135deg, #63CAB7 0%, #3B8FD4 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 18, fontWeight: 800,
-                  color: "#0A0F1E",
+                  fontSize: 18, fontWeight: 700, color: isDark ? "#F0F6FF" : "#1f2937",
                   fontFamily: "'Syne', sans-serif",
-                  boxShadow: "0 0 24px rgba(99,202,183,0.4)",
-                }}>N</div>
-                <div>
+                }}>NOVA</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                   <div style={{
-                    fontSize: 16, fontWeight: 700, color: isDark ? "#F0F6FF" : "#1f2937",
-                    fontFamily: "'Syne', sans-serif",
-                  }}>NOVA</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: "50%",
-                      background: "#63CAB7",
-                      animation: "pulse 2s ease-in-out infinite",
-                      boxShadow: "0 0 6px #63CAB7",
-                    }} />
-                    <span style={{ fontSize: 11, color: "#63CAB7", fontWeight: 500 }}>Online</span>
-                  </div>
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: "#63CAB7",
+                    animation: "pulse 2s ease-in-out infinite",
+                    boxShadow: "0 0 6px #63CAB7",
+                  }} />
+                  <span style={{ fontSize: 11, color: "#63CAB7", fontWeight: 500 }}>Online</span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => clearChat()}
-              style={{
-                background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0f0",
-                border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e5e5",
-                borderRadius: 8, padding: "8px 12px", cursor: "pointer",
-                color: isDark ? "#8899B4" : "#6b7280", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
-                transition: "all 0.2s",
-              }}
-            >Clear</button>
+
+            {/* Right - Clear Button */}
+            <div style={{ flex: 1, textAlign: "right" }}>
+              <button
+                onClick={() => clearChat()}
+                style={{
+                  background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0f0",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e5e5",
+                  borderRadius: 8, padding: "8px 12px", cursor: "pointer",
+                  color: isDark ? "#8899B4" : "#6b7280", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                  transition: "all 0.2s",
+                }}
+              >Clear</button>
+            </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages Container - Centered */}
           <div className="messages-area" ref={chatRef} style={{
             flex: 1, overflowY: "auto",
-            padding: "20px 16px",
+            padding: "24px 20px",
             display: "flex", flexDirection: "column",
             zIndex: 5,
             background: isDark ? "transparent" : "#ffffff",
+            alignItems: "center",
           }}>
-            {messages.length === 0 && (
-              <div style={{ marginBottom: 24, textAlign: "center" }}>
-                <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 12, marginBottom: 12, textTransform: "uppercase", letterSpacing: "1px" }}>Try asking</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: "400px", margin: "0 auto" }}>
-                  {suggestions.map(s => (
-                    <button key={s}
-                      onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                      style={{
-                        background: isDark ? "rgba(99,202,183,0.06)" : "rgba(99,202,183,0.1)",
-                        border: isDark ? "1px solid rgba(99,202,183,0.2)" : "1px solid rgba(99,202,183,0.3)",
-                        borderRadius: 16, padding: "8px 12px", cursor: "pointer",
-                        color: isDark ? "#8BBDCF" : "#10A37F", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
-                        transition: "all 0.2s",
-                      }}>{s}</button>
-                  ))}
+            {/* Content wrapper - max width */}
+            <div style={{
+              width: "100%",
+              maxWidth: "800px",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              {messages.length === 0 && (
+                <div style={{ marginBottom: 24, textAlign: "center", width: "100%" }}>
+                  <h2 style={{
+                    fontSize: "28px",
+                    fontWeight: "600",
+                    color: isDark ? "#F0F6FF" : "#1f2937",
+                    marginBottom: "12px",
+                    fontFamily: "'Syne', sans-serif",
+                  }}>Welcome to NOVA</h2>
+                  <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 14, marginBottom: 20 }}>Start a conversation with your AI assistant</p>
+                  <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 12, marginBottom: 24, textTransform: "uppercase", letterSpacing: "1px" }}>Try asking</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: "400px", margin: "0 auto" }}>
+                    {suggestions.map(s => (
+                      <button key={s}
+                        onClick={() => { setInput(s); inputRef.current?.focus(); }}
+                        style={{
+                          background: isDark ? "rgba(99,202,183,0.06)" : "rgba(99,202,183,0.1)",
+                          border: isDark ? "1px solid rgba(99,202,183,0.2)" : "1px solid rgba(99,202,183,0.3)",
+                          borderRadius: 12, padding: "12px", cursor: "pointer",
+                          color: isDark ? "#8BBDCF" : "#10A37F", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+                          transition: "all 0.2s",
+                        }}>{s}</button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {messages.map((msg, i) => <Message key={i} msg={msg} isDark={isDark} />)}
-            {loading && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, animation: "fadeSlideIn 0.3s both" }}>
+              {messages.map((msg, i) => <Message key={i} msg={msg} isDark={isDark} />)}
+              {loading && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, animation: "fadeSlideIn 0.3s both" }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    background: "linear-gradient(135deg, #63CAB7, #3B8FD4)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 700, color: "#0A0F1E",
+                    fontFamily: "'Syne', sans-serif",
+                    boxShadow: "0 0 16px rgba(99,202,183,0.35)", flexShrink: 0,
+                  }}>N</div>
+                  <TypingIndicator isDark={isDark} />
+                </div>
+              )}
+              {error && (
                 <div style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #63CAB7, #3B8FD4)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 14, fontWeight: 700, color: "#0A0F1E",
-                  fontFamily: "'Syne', sans-serif",
-                  boxShadow: "0 0 16px rgba(99,202,183,0.35)", flexShrink: 0,
-                }}>N</div>
-                <TypingIndicator isDark={isDark} />
-              </div>
-            )}
-            {error && (
-              <div style={{
-                textAlign: "center", color: "#f87171", fontSize: 13,
-                padding: "10px 16px", background: isDark ? "rgba(239,68,68,0.08)" : "rgba(239,68,68,0.1)",
-                borderRadius: 10, border: isDark ? "1px solid rgba(239,68,68,0.2)" : "1px solid #fca5a5",
-                marginBottom: 12,
-              }}>{error}</div>
-            )}
-            <div ref={bottomRef} />
+                  textAlign: "center", color: "#f87171", fontSize: 13,
+                  padding: "10px 16px", background: isDark ? "rgba(239,68,68,0.08)" : "rgba(239,68,68,0.1)",
+                  borderRadius: 10, border: isDark ? "1px solid rgba(239,68,68,0.2)" : "1px solid #fca5a5",
+                  marginBottom: 12,
+                }}>{error}</div>
+              )}
+              <div ref={bottomRef} />
+            </div>
           </div>
 
-          {/* Input Area */}
+          {/* Input Area - Fixed at bottom */}
           <div style={{
-            padding: "12px 16px 16px",
+            padding: "12px 20px 16px",
             borderTop: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e5e5e5",
             background: isDark ? "rgba(0,0,0,0.15)" : "#f9fafb",
             zIndex: 10,
+            position: "sticky",
+            bottom: 0,
+            display: "flex",
+            justifyContent: "center",
           }}>
             <div style={{
               display: "flex", alignItems: "flex-end", gap: 10,
@@ -361,7 +396,8 @@ export default function AIChatbot() {
               border: isDark ? "1px solid rgba(99,202,183,0.15)" : "1px solid #e5e5e5",
               borderRadius: 12, padding: "10px 12px",
               transition: "border-color 0.2s",
-              maxWidth: "100%",
+              maxWidth: "800px",
+              width: "100%",
             }}>
               <textarea
                 ref={inputRef}
@@ -403,9 +439,6 @@ export default function AIChatbot() {
                 </svg>
               </button>
             </div>
-            <p style={{ textAlign: "center", color: isDark ? "#2E3D58" : "#9ca3af", fontSize: 10, marginTop: 8, letterSpacing: "0.3px" }}>
-              Enter to send · Shift+Enter for new line
-            </p>
           </div>
         </div>
       </div>
