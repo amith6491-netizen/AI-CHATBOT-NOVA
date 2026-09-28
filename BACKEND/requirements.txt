@@ -10,4 +10,5 @@ MarkupSafe==3.0.3
 packaging==26.0
 pillow==12.1.0
 python-dotenv
+requests==2.31.0
 Werkzeug==3.1.4
