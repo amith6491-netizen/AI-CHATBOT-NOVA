@@ -1,637 +1,349 @@
 # NOVA AI Chatbot
 
-NOVA is a full-stack AI chatbot project built with a Python Flask backend and a React + Vite frontend. The app sends chat requests to a local Ollama model, so you can run it without any paid API key or external cloud service.
+NOVA is a full-stack AI chatbot application built with a **Python Flask backend** and a **React + Vite frontend**. The app is deployed on **Render** and uses **Groq API** for AI inference—no local setup required!
 
-## Project overview
-
-This project includes:
-
-- A Python backend that handles chat requests and calls the local LLM through Ollama
-- A modern React frontend for the chat interface
-- Local AI model support using Ollama
-- Simple, lightweight architecture for learning and customization
-
-## What is included in this project
-
-### Backend
-Location: `BACKEND/`
-
-Files:
-- `BACKEND/pythonserver.py` - Flask server with `/chat` endpoint
-- `BACKEND/chatbot.py` - chatbot logic and predefined response dictionary
-- `BACKEND/requirements.txt` - Python dependencies
-
-The backend does the following:
-- loads environment variables from `BACKEND/.env`
-- validates incoming chat messages
-- sends the conversation to Ollama
-- returns the model reply to the frontend
-
-### Frontend
-Location: `FRONTEND/`
-
-Files:
-- `FRONTEND/src/App.jsx` - main chat UI and message handling
-- `FRONTEND/src/main.jsx` - app entry point
-- `FRONTEND/src/index.css` - base styling
-- `FRONTEND/package.json` - frontend scripts and dependencies
-
-The frontend does the following:
-- displays chat messages
-- collects user input
-- sends requests to the local Flask backend
-- renders AI responses in the browser
-
-### Root files
-- `README.md` - project documentation
-- `requirements.txt` - root environment dependencies
-- `.venv/` - local virtual environment (created for project setup)
-
-## Tech stack
-
-- Python 3
-- Flask
-- Flask-CORS
-- React
-- Vite
-- Ollama
-- dotenv
-
-## AI model used
-
-This project uses Ollama as the local AI runtime.
-
-Default model:
-- `llama3.2`
-
-The backend is configured with:
-- `OLLAMA_URL=http://127.0.0.1:11434/api/chat`
-- `OLLAMA_MODEL=llama3.2`
-
-You can switch models by editing `BACKEND/.env` and setting a different value for `OLLAMA_MODEL`.
-
-Example:
-
-```env
-OLLAMA_URL=http://127.0.0.1:11434/api/chat
-OLLAMA_MODEL=llama3.2
-```
-
-If you want to use another installed model, run:
-
-```powershell
-ollama list
-```
-
-Then update:
-
-```powershell
-$env:OLLAMA_MODEL="your-model-name"
-```
-
-or create a `.env` file in the `BACKEND` folder with the new model.
-
-## Prerequisites
-
-Before running the project, install:
-
-- Python 3.10+
-- Node.js and npm
-- Ollama
-
-## Step-by-step setup
-
-### 1. Install Ollama
-
-Download and install Ollama from:
-https://ollama.com/download
-
-### 2. Pull the model
-
-Open PowerShell and run:
-
-```powershell
-ollama pull llama3.2
-```
-
-This downloads the default model used by the project.
-
-### 3. Create or activate the virtual environment
-
-From the project root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-### 4. Install backend dependencies
-
-```powershell
-cd BACKEND
-pip install -r requirements.txt
-```
-
-### 5. Create the environment file for the backend
-
-Inside `BACKEND/`, create a file named `.env` if it does not already exist.
-
-Example content:
-
-```env
-OLLAMA_URL=http://127.0.0.1:11434/api/chat
-OLLAMA_MODEL=llama3.2
-```
-
-### 6. Start the backend server
-
-In PowerShell:
-
-```powershell
-cd BACKEND
-..\.venv\Scripts\python.exe pythonserver.py
-```
-
-The backend starts on:
-
-- http://127.0.0.1:5000
-
-### 7. Start the frontend
-
-Open a second terminal and run:
-
-```powershell
-cd FRONTEND
-npm install
-npm run dev -- --host 0.0.0.0
-```
-
-The frontend runs on:
-
-
-- http://localhost:5173/
-
-### 8. Open the app in a browser
-
-Visit:
-
-```text
-http://localhost:5173/
-```
-
-## Deployment
-
-This project can be deployed in several ways depending on your goal and hosting budget.
-
-### Option 1: Local development deployment
-
-This is the default setup for the project.
-
-- Run Ollama locally.
-- Start the backend on the machine where the Flask app is running.
-- Run the frontend with Vite.
-- Access the app from `http://localhost:5173/`.
-
-This is the easiest option for testing, learning, and local development.
-
-### Option 2: Single-server production deployment
-
-Use one VPS or physical server to host both the frontend and backend.
-
-1. Install Python, Node.js, and Ollama on the server.
-2. Pull the AI model:
-
-```bash
-ollama pull llama3.2
-```
-
-3. Start the backend:
-
-```bash
-cd BACKEND
-pip install -r requirements.txt
-python pythonserver.py
-```
-
-4. Build the frontend:
-
-```bash
-cd FRONTEND
-npm install
-npm run build
-```
-
-5. Serve the built frontend with a web server such as Nginx or a Node/Vite preview server.
-6. Point the frontend to the backend URL in your app configuration.
-
-This is a good option if you want full control and low hosting cost.
-
-### Option 3: Frontend on static hosting + backend on a server
-
-Split the deployment into two parts:
-
-- Frontend: deploy to Vercel, Netlify, GitHub Pages, or Cloudflare Pages
-- Backend: deploy to Render, Railway, Fly.io, DigitalOcean, Azure App Service, or a VPS
-
-In this setup:
-
-- the frontend is a static React app
-- the backend remains a Python Flask service
-- the frontend calls the backend API at a public URL such as:
-
-```text
-https://your-backend-domain.com/chat
-```
-
-Important: the deployed backend must still be able to reach an Ollama instance. If the backend is not on the same machine as Ollama, make sure the Ollama server is reachable from the deployed environment.
-
-### Option 4: Cloud deployment with managed hosting
-
-Common providers for this app:
-
-- Render
-- Railway
-- Fly.io
-- DigitalOcean App Platform
-- Azure App Service
-- AWS Elastic Beanstalk
-- Heroku (older projects)
-
-Typical steps:
-
-1. Push the project to GitHub.
-2. Create a new app/service in your provider.
-3. Configure build commands for the frontend and backend.
-4. Set environment variables such as:
-
-```env
-OLLAMA_URL=http://127.0.0.1:11434/api/chat
-OLLAMA_MODEL=llama3.2
-```
-
-5. Start the backend process and deploy the frontend build.
-
-This is the most practical option for a production-ready public app.
-
-### Render deployment (specific guide)
-
-Render is a good option for hosting the backend and frontend separately.
-
-#### 1. Push the project to GitHub
-
-Upload the repository to GitHub before creating services on Render.
-
-#### 2. Deploy the Flask backend
-
-Create a new Web Service on Render.
-
-Settings:
-
-- Repository: your GitHub repo
-- Root Directory: `BACKEND`
-- Build Command:
-
-```bash
-pip install -r requirements.txt
-```
-
-- Start Command:
-
-```bash
-gunicorn pythonserver:app --bind 0.0.0.0:$PORT
-```
-
-- Environment Variables:
-
-```env
-OLLAMA_URL=http://127.0.0.1:11434/api/chat
-OLLAMA_MODEL=llama3.2
-```
-
-Important:
-
-- This project expects Ollama to be reachable from the backend.
-- On Render, the backend cannot usually access a local Ollama instance running on your own laptop.
-- You need either:
-  - a separate Ollama-hosted service or
-  - another machine/server where Ollama is running and reachable over the network.
-
-#### 3. Deploy the React frontend
-
-Create a second service on Render as a Static Site.
-
-Settings:
-
-- Repository: same GitHub repo
-- Root Directory: `FRONTEND`
-- Build Command:
-
-```bash
-npm install
-npm run build
-```
-
-- Publish Directory:
-
-```bash
-dist
-```
-
-- Environment Variable:
-
-```env
-VITE_API_URL=https://your-backend-service-name.onrender.com
-```
-
-#### 4. Update the frontend API URL
-
-In the React app, the frontend uses:
-
-```js
-import.meta.env.VITE_API_URL || "http://localhost:5000"
-```
-
-When deployed, set `VITE_API_URL` to the public Render backend URL so the frontend calls the hosted API instead of localhost.
-
-#### 5. Test the deployment
-
-- Open the frontend URL from Render
-- Send a message from the chat UI
-- Confirm the frontend calls the backend service
-- Confirm the backend reaches Ollama successfully
-
-#### Render deployment note
-
-This app is designed around local Ollama usage, so Render deployment works best when the backend can reach a real Ollama endpoint from the cloud environment. If you do not have a remote Ollama service available, the app will not fully work on Render.
-
-### Option 5: Docker deployment
-
-You can also deploy with Docker containers.
-
-Typical Docker setup:
-
-- One container for the Flask backend
-- One container for the frontend
-- One container for Ollama
-
-This works well if you want a portable deployment across machines or cloud providers.
-
-Example architecture:
-
-```text
-Browser -> Frontend container -> Backend container -> Ollama container
-```
-
-### Option 6: Self-hosted environment with reverse proxy
-
-For a production environment, you can run the app behind Nginx or Caddy:
-
-- Frontend served on port 80 or 443
-- Backend served on a private/internal port or subdomain
-- Reverse proxy used to route traffic to the correct service
-
-This is a common production setup for company or personal deployments.
-
-### Recommended production workflow
-
-For a robust public deployment:
-
-1. Keep the backend as a Python Flask service.
-2. Build the frontend with Vite.
-3. Serve the frontend from a static host or CDN.
-4. Deploy the backend on a server that can access Ollama.
-5. Use environment variables for model and API URL settings.
-6. Add a reverse proxy or TLS certificate for HTTPS.
-
-### Production example commands
-
-Backend:
-
-```bash
-cd BACKEND
-pip install -r requirements.txt
-gunicorn pythonserver:app --bind 0.0.0.0:5000
-```
-
-Frontend:
-
-```bash
-cd FRONTEND
-npm install
-npm run build
-npm run preview -- --host 0.0.0.0
-```
-
-### Deployment notes
-
-- This project currently depends on Ollama, so the model must be installed and accessible in the deployment environment.
-- If the backend is running on a remote server, make sure the Ollama service is reachable over the network.
-- Update the backend `.env` file or cloud environment variables to match the actual deployment URL and model name.
-- The frontend should send requests to the backend domain, not to `localhost`, when deployed outside of a local machine.
-
-## How the app works
-
-1. The user types a message in the React chat UI.
-2. The frontend sends the message to the Flask backend at `/chat`.
-3. The backend validates the request.
-4. The backend sends the conversation to Ollama using the configured model.
-5. Ollama responds with generated text.
-6. The backend sends the answer back to the frontend.
-7. The UI displays the AI response.
-
-## Files and folder structure
-
-```text
-AI-CHATBOT-PROJECT/
-├── BACKEND/
-│   ├── chatbot.py
-│   ├── pythonserver.py
-│   ├── requirements.txt
-│   └── .env
-├── FRONTEND/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   └── README.md
-├── README.md
-├── requirements.txt
-├── .venv/
-└── LICENSE
-```
-
-## Important notes
-
-- The project uses local inference through Ollama, so no Anthropic or OpenAI API key is required.
-- If Ollama is not running, the backend will return an error telling you to start it.
-- If the selected model is missing, install it using `ollama pull <model-name>`.
-- The app is designed as a local learning project and can be extended with more features.
-
-## Common troubleshooting
-
-### Ollama not running
-
-Start it from the terminal:
-
-```powershell
-ollama serve
-```
-
-### Model not found
-
-```powershell
-ollama pull llama3.2
-```
-
-### Backend cannot connect to Ollama
-
-Check that the `.env` file is correct:
-
-```env
-OLLAMA_URL=http://127.0.0.1:11434/api/chat
-OLLAMA_MODEL=llama3.2
-```
-
-### Port issues
-
-If port 5000 or 5173 is busy, stop the existing process or change the app configuration before restarting.
-
-## Summary
-
-This project is a simple AI chatbot app using:
-
-- Flask backend
-- React frontend
-- Ollama local LLM
-- Default model: `llama3.2`
-
-It is a clean example of how to build a local AI chatbot without depending on a paid external model provider.
-
-## 🐳 Docker Deployment & Containerization
-
-The project is fully containerized using Docker and Docker Compose. You can run the entire stack (Backend + Frontend) with a single command.
-
-### Architecture in Docker
-```
-+--------------------------------------------------------------------------+
-|  User Browser (http://localhost:3000)                                    |
-+--------------------------------------------------------------------------+
-       |                                              |
-       | (Static Files & Proxied /chat)               | (Optional Direct API)
-       v                                              v
-+-----------------------------+               +----------------------------+
-| Frontend Container (Nginx)  |               | Backend Container (Flask)  |
-| - Serves React production   | -- /chat ---> | - Port 5000 (Gunicorn)     |
-|   build on port 80 (->3000) |  (Internal)   | - Non-root appuser         |
-| - Reverse proxies /chat     |               | - Health checked           |
-+-----------------------------+               +----------------------------+
-                                                             |
-                                                             | (host.docker.internal:11434)
-                                                             v
-                                              +----------------------------+
-                                              | Host Machine (Ollama)      |
-                                              | - llama3.2 LLM Runtime     |
-                                              +----------------------------+
-```
-
-### Prerequisites
-1. [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/) (Docker Desktop on Windows/macOS, or Docker Engine + Compose plugin on Linux).
-2. [Ollama](https://ollama.com/) running on your host machine with your desired model installed:
-   ```bash
-   ollama pull llama3.2
-   ```
-
-### Environment Variables
-Configure your stack by creating a `.env` file in the root directory:
-```bash
-cp .env.example .env
-```
-
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `BACKEND_PORT` | `5000` | Port on host mapped to Flask backend |
-| `FRONTEND_PORT` | `3000` | Port on host mapped to React/Nginx frontend |
-| `OLLAMA_URL` | `http://host.docker.internal:11434/api/chat` | URL for Ollama chat API endpoint |
-| `OLLAMA_MODEL` | `llama3.2` | Local model name installed in Ollama |
-| `OLLAMA_API_KEY` | *(empty)* | Optional API key for Ollama Cloud or external AI proxy |
-| `VITE_API_URL` | *(empty)* | Optional direct API URL. Leave empty to use Nginx reverse proxy |
-
-> [!NOTE]
-> `host.docker.internal` allows Docker containers to securely connect back to services running on your host machine (such as Ollama on port 11434).
-
-### How to Build & Run
-To build the Docker images and start all containers in the background:
-```bash
-docker compose up -d --build
-```
-
-Once started:
-- **Frontend Chat Interface**: [http://localhost:3000](http://localhost:3000)
-- **Backend API Status**: [http://localhost:5000/](http://localhost:5000/)
-
-### How to Stop
-To cleanly stop all running containers:
-```bash
-docker compose down
-```
-
-### How to View Logs
-View combined real-time logs for all services:
-```bash
-docker compose logs -f
-```
-
-View logs for a specific service:
-```bash
-# Backend logs
-docker compose logs -f backend
-
-# Frontend logs
-docker compose logs -f frontend
-```
-
-### How to Rebuild
-If you modify source code or dependencies, trigger a clean rebuild:
-```bash
-docker compose up -d --build --force-recreate
-```
-
-### Production Deployment
-For production servers (VPS, AWS EC2, DigitalOcean, Hetzner, etc.):
-1. Clone the repository onto your server.
-2. Copy `.env.example` to `.env` and set your production domain/ports.
-3. If using an external/cloud model provider or remote Ollama server, set `OLLAMA_URL` and `OLLAMA_API_KEY` accordingly.
-4. Launch the stack:
-   ```bash
-   docker compose up -d --build
-   ```
-5. *(Recommended)* Put a reverse proxy like Cloudflare, Caddy, or Traefik in front with SSL/TLS certificates pointing to port `3000`.
+**Live Demo:** https://ai-chatbot-nova-1.onrender.com
 
 ---
 
-## Manual (Non-Docker) Local Development
+## 🚀 Quick Start (Cloud Deployment)
 
-If you prefer running without Docker:
+NOVA is already deployed and live. Just visit the link above and start chatting!
 
-### 1. Start Ollama and pull model
-```powershell
-ollama pull llama3.2
+No installation needed. The app runs entirely in the cloud with:
+- **Frontend**: Deployed on Render (React + Vite)
+- **Backend**: Deployed on Render (Flask + Gunicorn)
+- **AI Model**: Groq API (fast, free tier available)
+
+---
+
+## 📁 Project Structure
+
+```
+AI-CHATBOT-PROJECT/
+├── BACKEND/
+│   ├── pythonserver.py       # Flask server with /chat endpoint
+│   ├── chatbot.py            # Chat logic (optional)
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile            # Docker build for backend
+│   └── .dockerignore         # Docker ignore rules
+├── FRONTEND/
+│   ├── src/
+│   │   ├── App.jsx           # Main chat UI
+│   │   ├── main.jsx          # Entry point
+│   │   └── index.css         # Styles
+│   ├── package.json          # Frontend dependencies
+│   ├── vite.config.js        # Vite configuration
+│   ├── Dockerfile            # Docker build for frontend
+│   ├── nginx.conf            # Nginx reverse proxy config
+│   └── index.html            # HTML entry point
+├── docker-compose.yml        # Local Docker orchestration
+├── README.md                 # This file
+├── LICENSE                   # License
+└── .env.example              # Environment template
 ```
 
-### 2. Start backend
-```powershell
+---
+
+## 🏗️ Architecture
+
+### Cloud Deployment (Render)
+```
+User Browser
+    ↓
+[Frontend on Render] → 192.168.56.1:3000
+    ↓ (VITE_API_URL)
+[Backend on Render] → 192.168.56.1:5000
+    ↓ (GROQ_API_KEY)
+[Groq API] → AI Response
+```
+
+### Local Docker Deployment (Optional)
+```
+User Browser (localhost:3000)
+    ↓
+[Frontend Container - Nginx] → Port 80→3000
+    ↓ (Reverse Proxy)
+[Backend Container - Flask] → Port 5000
+    ↓ (OLLAMA_URL)
+[Local Ollama] → AI Response
+```
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Python 3.11+**
+- **Flask** - Web framework
+- **Flask-CORS** - Cross-origin requests
+- **Gunicorn** - Production server
+- **Requests** - HTTP client
+- **python-dotenv** - Environment variables
+
+### Frontend
+- **React 18** - UI framework
+- **Vite** - Build tool
+- **TailwindCSS** (optional) - Styling
+
+### Deployment
+- **Render** - Cloud hosting (Backend + Frontend)
+- **Groq API** - AI inference
+- **Docker** - Containerization
+- **Nginx** - Reverse proxy
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend (Groq API)
+```env
+# Required for cloud deployment
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=mixtral-8x7b-32768
+
+# Optional (defaults shown)
+PORT=5000
+HOST=0.0.0.0
+```
+
+### Frontend
+```env
+# Backend API URL (leave empty for local /chat proxy)
+VITE_API_URL=https://ai-chatbot-nova.onrender.com
+
+# Optional (for local development)
+# VITE_API_URL=http://localhost:5000
+```
+
+### Local Development (Ollama)
+```env
+OLLAMA_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=llama3.2
+```
+
+---
+
+## 🐳 Local Development with Docker
+
+### Prerequisites
+- [Docker Desktop](https://docs.docker.com/get-docker/)
+- [Ollama](https://ollama.ai/) installed on host machine
+- Model pulled: `ollama pull llama3.2`
+
+### Run Locally
+```bash
+# Build and start all services
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Stop everything
+docker compose down
+```
+
+**Access:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+
+---
+
+## 🚀 Cloud Deployment on Render
+
+### Backend Setup
+1. Create new **Web Service** on Render
+2. Connect GitHub repository
+3. **Root Directory:** `BACKEND`
+4. **Build Command:** `pip install -r requirements.txt`
+5. **Start Command:** `gunicorn -w 4 -b 0.0.0.0:$PORT pythonserver:app`
+6. **Environment Variables:**
+   ```
+   GROQ_API_KEY=your_key_here
+   GROQ_MODEL=mixtral-8x7b-32768
+   PORT=5000
+   ```
+7. Deploy ✅
+
+### Frontend Setup
+1. Create new **Web Service** on Render
+2. Connect same GitHub repository
+3. **Root Directory:** `FRONTEND`
+4. **Build Command:** `npm install && npm run build`
+5. **Start Command:** `npm run preview`
+6. **Environment Variables:**
+   ```
+   VITE_API_URL=https://your-backend-url.onrender.com
+   ```
+7. Deploy ✅
+
+---
+
+## 💬 How It Works
+
+```
+1. User types message in browser
+   ↓
+2. Frontend sends POST /chat request with messages
+   ↓
+3. Backend receives request and validates
+   ↓
+4. Backend calls Groq API with system prompt + messages
+   ↓
+5. Groq returns AI-generated response
+   ↓
+6. Backend returns reply to frontend
+   ↓
+7. Frontend displays response in chat UI
+```
+
+---
+
+## 🔧 Manual Setup (No Docker)
+
+### Local Development
+
+#### 1. Install dependencies
+
+**Backend:**
+```bash
 cd BACKEND
 pip install -r requirements.txt
+```
+
+**Frontend:**
+```bash
+cd FRONTEND
+npm install
+```
+
+#### 2. Create environment files
+
+**`BACKEND/.env`:**
+```env
+OLLAMA_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=llama3.2
+PORT=5000
+```
+
+Or for Groq API:
+```env
+GROQ_API_KEY=your_key
+GROQ_MODEL=mixtral-8x7b-32768
+PORT=5000
+```
+
+#### 3. Start Ollama (if using local model)
+```bash
+ollama serve
+```
+
+#### 4. Run backend
+```bash
+cd BACKEND
 python pythonserver.py
 ```
 
-### 3. Start frontend
-In another terminal:
-```powershell
+Backend runs on: **http://localhost:5000**
+
+#### 5. Run frontend (new terminal)
+```bash
 cd FRONTEND
-npm install
 npm run dev
 ```
 
-Then open `http://localhost:5173/`.
+Frontend runs on: **http://localhost:5173**
+
+#### 6. Open browser
+Visit: **http://localhost:5173**
+
+---
+
+## 🔑 Getting API Keys
+
+### Groq API (Free)
+1. Go to https://console.groq.com
+2. Sign up (free)
+3. Navigate to "API Keys"
+4. Create new API key
+5. Copy and paste into `GROQ_API_KEY` environment variable
+
+### Hugging Face (Alternative)
+1. Go to https://huggingface.co/settings/tokens
+2. Create new token (free tier)
+3. Use in backend configuration
+
+---
+
+## 🐛 Troubleshooting
+
+### "GROQ_API_KEY not configured"
+- ✅ Check Render environment variables
+- ✅ Verify key is correct at https://console.groq.com
+- ✅ Redeploy backend after adding key
+
+### "Ollama is not running"
+- Run: `ollama serve`
+- Ensure port 11434 is open
+
+### "Model not found"
+- Run: `ollama pull llama3.2`
+- Or switch to Groq API (recommended)
+
+### CORS errors
+- ✅ Backend has CORS enabled
+- ✅ Frontend uses correct `VITE_API_URL`
+- ✅ Check deployment domain matches config
+
+### Frontend won't load
+- ✅ Check Render frontend deployment status
+- ✅ Verify `VITE_API_URL` is set correctly
+- ✅ Check browser console for errors
+
+---
+
+## 📊 Deployed Services
+
+| Service | Status | URL |
+| :--- | :--- | :--- |
+| Frontend | ✅ Live | https://ai-chatbot-nova-1.onrender.com |
+| Backend | ✅ Live | https://ai-chatbot-nova.onrender.com |
+| AI Provider | Groq API | https://console.groq.com |
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License. See `LICENSE` file for details.
+
+---
+
+## 🤝 Contributing
+
+Feel free to fork, modify, and extend this project. It's a great starting point for building AI-powered applications!
+
+---
+
+## 💡 Future Enhancements
+
+- [ ] User authentication
+- [ ] Chat history persistence
+- [ ] Multiple AI model support
+- [ ] Voice input/output
+- [ ] Dark mode UI
+- [ ] Kubernetes deployment
+- [ ] Advanced analytics
+
+---
+
+## 📞 Support
+
+For issues or questions:
+1. Check the **Troubleshooting** section above
+2. Review deployment logs on Render
+3. Verify environment variables
+4. Check Groq API status at https://status.groq.com
+
+---
+
+**Happy chatting with NOVA! 🚀**
