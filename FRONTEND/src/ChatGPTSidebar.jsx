@@ -29,37 +29,86 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
     if (!chatElement) return;
 
     try {
-      const canvas = await html2canvas(chatElement, {
-        backgroundColor: isDark ? '#080D1A' : '#ffffff',
-        scale: 2,
+      // Create a temporary container with white background and black text
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = chatElement.offsetWidth + 'px';
+      tempDiv.style.padding = '20px';
+      tempDiv.style.backgroundColor = '#ffffff';
+      tempDiv.style.color = '#000000';
+      tempDiv.style.fontFamily = "'DM Sans', sans-serif";
+      tempDiv.style.lineHeight = '1.6';
+      document.body.appendChild(tempDiv);
+
+      // Copy messages with formatting
+      messages.forEach((msg, index) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.style.marginBottom = '16px';
+        messageDiv.style.padding = '12px';
+        messageDiv.style.backgroundColor = msg.role === 'user' ? '#e3f2fd' : '#f5f5f5';
+        messageDiv.style.borderRadius = '8px';
+        messageDiv.style.color = '#000000';
+        messageDiv.style.fontSize = '14px';
+
+        const label = document.createElement('strong');
+        label.style.color = msg.role === 'user' ? '#1976d2' : '#333333';
+        label.textContent = msg.role === 'user' ? 'You: ' : 'NOVA: ';
+        label.style.display = 'block';
+        label.style.marginBottom = '6px';
+
+        const content = document.createElement('div');
+        content.style.whiteSpace = 'pre-wrap';
+        content.style.wordWrap = 'break-word';
+        content.textContent = msg.content;
+        content.style.color = '#000000';
+
+        messageDiv.appendChild(label);
+        messageDiv.appendChild(content);
+        tempDiv.appendChild(messageDiv);
       });
-      
+
+      // Convert to canvas with white background
+      const canvas = await html2canvas(tempDiv, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      // Create PDF
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
-      
-      const imgWidth = 210;
+
+      const imgWidth = 190; // A4 width minus margins
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
 
       // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297;
+      pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
+      heightLeft -= 267; // A4 height minus margins
 
       // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
+        pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
+        heightLeft -= 267;
       }
 
+      // Save PDF
       pdf.save(`NOVA_Chat_${new Date().toLocaleDateString()}.pdf`);
+
+      // Clean up
+      document.body.removeChild(tempDiv);
     } catch (error) {
+      console.error('Error exporting PDF:', error);
       alert('Error exporting PDF. Please try again.');
     }
   };
