@@ -25,10 +25,10 @@ CORS(app, resources={
     }
 })
 
-# Hugging Face API Configuration
-HF_API_KEY = os.getenv("HF_API_KEY")
-HF_MODEL = os.getenv("HF_MODEL", "meta-llama/Llama-2-7b-chat-hf")
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
+# Groq API Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "mixtral-8x7b-32768")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are NOVA, an advanced AI assistant. 
 You are intelligent, witty, and helpful. 
@@ -44,8 +44,8 @@ def chat():
         return {}, 200
     
     try:
-        if not HF_API_KEY:
-            return jsonify({"error": "HF_API_KEY not configured"}), 500
+        if not GROQ_API_KEY:
+            return jsonify({"error": "GROQ_API_KEY not configured"}), 500
 
         data = request.get_json(silent=True)
 
@@ -62,47 +62,36 @@ def chat():
         ):
             return jsonify({"error": "Messages must contain user or assistant roles and non-empty content."}), 400
 
-        # Format conversation for Hugging Face
-        conversation = f"{SYSTEM_PROMPT}\n\n"
-        for msg in messages:
-            role = "User" if msg["role"] == "user" else "Assistant"
-            conversation += f"{role}: {msg['content']}\n"
-        conversation += "Assistant: "
-
+        # Prepare request for Groq
         payload = {
-            "inputs": conversation,
-            "parameters": {
-                "max_new_tokens": 500,
-                "temperature": 0.7
-            }
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                *messages
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.7
         }
 
         headers = {
-            "Authorization": f"Bearer {HF_API_KEY}"
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {GROQ_API_KEY}"
         }
 
-        # Call Hugging Face API
-        response = requests.post(HF_API_URL, json=payload, headers=headers, timeout=30)
+        # Call Groq API
+        response = requests.post(GROQ_API_URL, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
 
         result = response.json()
-        
-        # Extract reply
-        if isinstance(result, list) and len(result) > 0:
-            reply = result[0].get("generated_text", "").strip()
-            # Remove the prompt from the response
-            if "Assistant: " in reply:
-                reply = reply.split("Assistant: ")[-1].strip()
-        else:
-            reply = ""
+        reply = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 
         if not reply:
-            return jsonify({"error": "AI returned an empty response"}), 502
+            return jsonify({"error": "Groq returned an empty response"}), 502
 
         return jsonify({"reply": reply})
 
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"AI API error: {str(e)}"}), 503
+        return jsonify({"error": f"Groq API error: {str(e)}"}), 503
     except Exception as e:
         app.logger.exception("Unexpected error")
         return jsonify({"error": "The AI service is temporarily unavailable. Please try again."}), 500
