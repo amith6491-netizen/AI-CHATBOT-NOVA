@@ -1,17 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import json
 import os
-from urllib.error import HTTPError, URLError
-from urllib.request import Request as UrlRequest, urlopen
 from dotenv import load_dotenv
+import requests
 
-# Load environment variables from the backend directory regardless of cwd.
+# Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 app = Flask(__name__)
 
-# Configure CORS to allow specific origins
+# Configure CORS
 CORS(app, resources={
     r"/*": {
         "origins": [
@@ -27,8 +25,10 @@ CORS(app, resources={
     }
 })
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+# Hugging Face API Configuration
+HF_API_KEY = os.getenv("HF_API_KEY")
+HF_MODEL = os.getenv("HF_MODEL", "meta-llama/Llama-2-7b-chat-hf")
+HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 
 SYSTEM_PROMPT = """You are NOVA, an advanced AI assistant. 
 You are intelligent, witty, and helpful. 
@@ -44,11 +44,13 @@ def chat():
         return {}, 200
     
     try:
+        if not HF_API_KEY:
+            return jsonify({"error": "HF_API_KEY not configured"}), 500
+
         data = request.get_json(silent=True)
 
         if not data or not isinstance(data.get("messages"), list) or not data["messages"]:
             return jsonify({"error": "No messages provided or invalid JSON"}), 400
-
 
         messages = data["messages"][-20:]
         if any(
@@ -60,46 +62,49 @@ def chat():
         ):
             return jsonify({"error": "Messages must contain user or assistant roles and non-empty content."}), 400
 
-        ollama_url = os.getenv("OLLAMA_URL", OLLAMA_URL)
-        ollama_model = os.getenv("OLLAMA_MODEL", OLLAMA_MODEL)
+        # Format conversation for Hugging Face
+        conversation = f"{SYSTEM_PROMPT}\n\n"
+        for msg in messages:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            conversation += f"{role}: {msg['content']}\n"
+        conversation += "Assistant: "
 
-        payload = json.dumps({
-            "model": ollama_model,
-            "stream": False,
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *messages],
-            "options": {"num_predict": 1000},
-        }).encode("utf-8")
+        payload = {
+            "inputs": conversation,
+            "parameters": {
+                "max_new_tokens": 500,
+                "temperature": 0.7
+            }
+        }
 
-        headers = {"Content-Type": "application/json"}
-        api_key = os.getenv("OLLAMA_API_KEY")
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
+        headers = {
+            "Authorization": f"Bearer {HF_API_KEY}"
+        }
 
-        ollama_request = UrlRequest(
-            ollama_url,
-            data=payload,
-            headers=headers,
-            method="POST",
-        )
-        with urlopen(ollama_request, timeout=120) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        # Call Hugging Face API
+        response = requests.post(HF_API_URL, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
 
-        reply = result.get("message", {}).get("content", "").strip()
+        result = response.json()
+        
+        # Extract reply
+        if isinstance(result, list) and len(result) > 0:
+            reply = result[0].get("generated_text", "").strip()
+            # Remove the prompt from the response
+            if "Assistant: " in reply:
+                reply = reply.split("Assistant: ")[-1].strip()
+        else:
+            reply = ""
+
         if not reply:
-            return jsonify({"error": "The local model returned an empty response."}), 502
+            return jsonify({"error": "AI returned an empty response"}), 502
+
         return jsonify({"reply": reply})
 
-    except HTTPError as error:
-        current_model = os.getenv("OLLAMA_MODEL", OLLAMA_MODEL)
-        if error.code == 404:
-            return jsonify({"error": f"Ollama model '{current_model}' is not installed. Run: ollama pull {current_model}"}), 503
-        return jsonify({"error": "Ollama rejected the request. Check that the selected model is installed."}), 502
-    except URLError:
-        return jsonify({"error": "Ollama is not running. Start Ollama, then try again."}), 503
-    except (json.JSONDecodeError, KeyError):
-        return jsonify({"error": "Ollama returned an invalid response."}), 502
-    except Exception:
-        app.logger.exception("Unexpected chat provider error")
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"AI API error: {str(e)}"}), 503
+    except Exception as e:
+        app.logger.exception("Unexpected error")
         return jsonify({"error": "The AI service is temporarily unavailable. Please try again."}), 500
 
 
