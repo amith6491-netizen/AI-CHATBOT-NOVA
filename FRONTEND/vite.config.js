@@ -17,13 +17,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': [
-            'react',
-            'react-dom',
-          ],
-          'zustand': ['zustand'],
-          'pdf': ['jspdf', 'html2canvas'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/zustand')) {
+            return 'vendor-zustand';
+          }
+          if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
+            return 'vendor-pdf';
+          }
         }
       }
     }
