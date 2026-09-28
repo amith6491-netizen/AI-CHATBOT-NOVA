@@ -13,4 +13,19 @@ export default defineConfig({
     port: 3000,
     allowedHosts: ['ai-chatbot-nova-1.onrender.com'],
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': [
+            'react',
+            'react-dom',
+          ],
+          'zustand': ['zustand'],
+          'pdf': ['jspdf', 'html2canvas'],
+        }
+      }
+    }
+  }
 })
