@@ -9,6 +9,7 @@ export const useChatStore = create((set) => ({
   tokensUsed: 0,
   currentModel: 'mixtral-8x7b-32768',
   temperature: 0.7,
+  theme: localStorage.getItem('theme') || 'dark',
 
   // Add message
   addMessage: (message) => set((state) => ({
@@ -75,4 +76,10 @@ export const useChatStore = create((set) => ({
   // Update settings
   setTemperature: (temp) => set({ temperature: temp }),
   setModel: (model) => set({ currentModel: model }),
+  
+  // Toggle theme
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme);
+    set({ theme });
+  },
 }));

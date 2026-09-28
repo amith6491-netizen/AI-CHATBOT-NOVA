@@ -3,7 +3,7 @@ import { useChatStore } from './store';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
+export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) {
   const {
     username,
     setUsername,
@@ -13,6 +13,8 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
     loadConversations,
     messages,
     tokensUsed,
+    theme,
+    setTheme,
   } = useChatStore();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -26,15 +28,40 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
     const chatElement = document.querySelector('.messages-area');
     if (!chatElement) return;
 
-    const canvas = await html2canvas(chatElement);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    const imgWidth = 210;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    pdf.save(`NOVA_Chat_${new Date().getTime()}.pdf`);
+    try {
+      const canvas = await html2canvas(chatElement, {
+        backgroundColor: isDark ? '#080D1A' : '#ffffff',
+        scale: 2,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= 297;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+      }
+
+      pdf.save(`NOVA_Chat_${new Date().toLocaleDateString()}.pdf`);
+    } catch (error) {
+      alert('Error exporting PDF. Please try again.');
+    }
   };
 
   const copyAllMessages = () => {
@@ -47,19 +74,23 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
     <>
       <div style={{
         width: sidebarOpen ? "260px" : "0px",
-        background: "linear-gradient(to-bottom, rgba(10, 15, 30, 0.8), rgba(8, 13, 26, 0.9))",
-        borderRight: sidebarOpen ? "1px solid rgba(99, 202, 183, 0.12)" : "none",
+        background: isDark 
+          ? "linear-gradient(to-bottom, rgba(10, 15, 30, 0.8), rgba(8, 13, 26, 0.9))"
+          : "linear-gradient(to-bottom, #ffffff, #f9fafb)",
+        borderRight: sidebarOpen ? (isDark ? "1px solid rgba(99, 202, 183, 0.12)" : "1px solid #e5e5e5") : "none",
         display: "flex",
         flexDirection: "column",
         transition: "width 0.3s ease",
         overflow: "hidden",
         height: "100vh",
         backdropFilter: "blur(10px)",
+        position: "relative",
+        zIndex: 100,
       }}>
         {/* Header */}
         <div style={{
           padding: "16px",
-          borderBottom: "1px solid rgba(99, 202, 183, 0.12)",
+          borderBottom: isDark ? "1px solid rgba(99, 202, 183, 0.12)" : "1px solid #e5e5e5",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -67,7 +98,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
           <h2 style={{
             fontSize: "16px",
             fontWeight: "600",
-            color: "#F0F6FF",
+            color: isDark ? "#F0F6FF" : "#1f2937",
             fontFamily: "'Syne', sans-serif",
           }}>NOVA</h2>
           <button
@@ -77,8 +108,9 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
               border: "none",
               cursor: "pointer",
               fontSize: "18px",
-              color: "#8899B4",
+              color: isDark ? "#8899B4" : "#6b7280",
               transition: "color 0.2s",
+              display: window.innerWidth <= 768 ? "block" : "none",
             }}
           >
             ✕
@@ -91,23 +123,23 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
           style={{
             margin: "16px",
             padding: "12px 16px",
-            background: "rgba(99, 202, 183, 0.06)",
-            border: "1px solid rgba(99, 202, 183, 0.2)",
+            background: isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)",
+            border: isDark ? "1px solid rgba(99, 202, 183, 0.2)" : "1px solid rgba(99, 202, 183, 0.3)",
             borderRadius: "8px",
             cursor: "pointer",
             fontSize: "14px",
             fontWeight: "500",
-            color: "#8BBDCF",
+            color: isDark ? "#8BBDCF" : "#10A37F",
             transition: "all 0.2s",
             fontFamily: "'DM Sans', sans-serif",
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.background = "rgba(99, 202, 183, 0.12)";
-            e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.4)";
+            e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
+            e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.4)" : "rgba(99, 202, 183, 0.5)";
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.background = "rgba(99, 202, 183, 0.06)";
-            e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.2)";
+            e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)";
+            e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.2)" : "rgba(99, 202, 183, 0.3)";
           }}
         >
           ➕ New chat
@@ -124,12 +156,14 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
             style={{
               width: "100%",
               padding: "10px",
-              background: messages.length > 0 ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.02)",
-              border: "1px solid rgba(99, 202, 183, 0.15)",
+              background: messages.length > 0 
+                ? (isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)")
+                : (isDark ? "rgba(99, 202, 183, 0.02)" : "rgba(99, 202, 183, 0.05)"),
+              border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid rgba(99, 202, 183, 0.2)",
               borderRadius: "8px",
               cursor: messages.length > 0 ? "pointer" : "not-allowed",
               fontSize: "13px",
-              color: messages.length > 0 ? "#8BBDCF" : "#4A5878",
+              color: messages.length > 0 ? (isDark ? "#8BBDCF" : "#10A37F") : (isDark ? "#4A5878" : "#9ca3af"),
               marginBottom: "8px",
               transition: "all 0.2s",
               fontFamily: "'DM Sans', sans-serif",
@@ -137,13 +171,15 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
             }}
             onMouseOver={(e) => {
               if (messages.length > 0) {
-                e.currentTarget.style.background = "rgba(99, 202, 183, 0.12)";
-                e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.4)";
+                e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
+                e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.4)" : "rgba(99, 202, 183, 0.5)";
               }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = "rgba(99, 202, 183, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.15)";
+              e.currentTarget.style.background = messages.length > 0 
+                ? (isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)")
+                : (isDark ? "rgba(99, 202, 183, 0.02)" : "rgba(99, 202, 183, 0.05)");
+              e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.15)" : "rgba(99, 202, 183, 0.2)";
             }}
           >
             📋 Copy Chat
@@ -154,25 +190,29 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
             style={{
               width: "100%",
               padding: "10px",
-              background: messages.length > 0 ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.02)",
-              border: "1px solid rgba(99, 202, 183, 0.15)",
+              background: messages.length > 0 
+                ? (isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)")
+                : (isDark ? "rgba(99, 202, 183, 0.02)" : "rgba(99, 202, 183, 0.05)"),
+              border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid rgba(99, 202, 183, 0.2)",
               borderRadius: "8px",
               cursor: messages.length > 0 ? "pointer" : "not-allowed",
               fontSize: "13px",
-              color: messages.length > 0 ? "#8BBDCF" : "#4A5878",
+              color: messages.length > 0 ? (isDark ? "#8BBDCF" : "#10A37F") : (isDark ? "#4A5878" : "#9ca3af"),
               transition: "all 0.2s",
               fontFamily: "'DM Sans', sans-serif",
               opacity: messages.length > 0 ? 1 : 0.6,
             }}
             onMouseOver={(e) => {
               if (messages.length > 0) {
-                e.currentTarget.style.background = "rgba(99, 202, 183, 0.12)";
-                e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.4)";
+                e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
+                e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.4)" : "rgba(99, 202, 183, 0.5)";
               }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = "rgba(99, 202, 183, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.15)";
+              e.currentTarget.style.background = messages.length > 0 
+                ? (isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)")
+                : (isDark ? "rgba(99, 202, 183, 0.02)" : "rgba(99, 202, 183, 0.05)");
+              e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.15)" : "rgba(99, 202, 183, 0.2)";
             }}
           >
             📄 Export PDF
@@ -189,7 +229,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
           <p style={{
             fontSize: "12px",
             fontWeight: "600",
-            color: "#4A5878",
+            color: isDark ? "#4A5878" : "#9ca3af",
             marginBottom: "8px",
             paddingLeft: "4px",
             textTransform: "uppercase",
@@ -201,7 +241,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
           {conversations.length === 0 ? (
             <p style={{
               fontSize: "13px",
-              color: "#4A5878",
+              color: isDark ? "#4A5878" : "#9ca3af",
               paddingLeft: "4px",
               fontFamily: "'DM Sans', sans-serif",
             }}>
@@ -216,13 +256,13 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
                   width: "100%",
                   textAlign: "left",
                   padding: "10px 12px",
-                  background: "rgba(99, 202, 183, 0.06)",
-                  border: "1px solid rgba(99, 202, 183, 0.15)",
+                  background: isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)",
+                  border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid rgba(99, 202, 183, 0.2)",
                   borderRadius: "8px",
                   marginBottom: "8px",
                   cursor: "pointer",
                   fontSize: "13px",
-                  color: "#8BBDCF",
+                  color: isDark ? "#8BBDCF" : "#10A37F",
                   transition: "all 0.2s",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -230,12 +270,12 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
                   fontFamily: "'DM Sans', sans-serif",
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = "rgba(99, 202, 183, 0.12)";
-                  e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.4)";
+                  e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
+                  e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.4)" : "rgba(99, 202, 183, 0.5)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(99, 202, 183, 0.06)";
-                  e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.15)";
+                  e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)";
+                  e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.15)" : "rgba(99, 202, 183, 0.2)";
                 }}
               >
                 {conv.title}
@@ -246,7 +286,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Footer - Settings and Profile */}
         <div style={{
-          borderTop: "1px solid rgba(99, 202, 183, 0.12)",
+          borderTop: isDark ? "1px solid rgba(99, 202, 183, 0.12)" : "1px solid #e5e5e5",
           padding: "16px",
           display: "flex",
           flexDirection: "column",
@@ -257,38 +297,38 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
             style={{
               width: "100%",
               padding: "12px",
-              background: "rgba(99, 202, 183, 0.06)",
-              border: "1px solid rgba(99, 202, 183, 0.15)",
+              background: isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)",
+              border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid rgba(99, 202, 183, 0.2)",
               borderRadius: "8px",
               cursor: "pointer",
               fontSize: "13px",
               fontWeight: "500",
-              color: "#8BBDCF",
+              color: isDark ? "#8BBDCF" : "#10A37F",
               transition: "all 0.2s",
               fontFamily: "'DM Sans', sans-serif",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = "rgba(99, 202, 183, 0.12)";
-              e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.4)";
+              e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
+              e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.4)" : "rgba(99, 202, 183, 0.5)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = "rgba(99, 202, 183, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(99, 202, 183, 0.15)";
+              e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.06)" : "rgba(99, 202, 183, 0.1)";
+              e.currentTarget.style.borderColor = isDark ? "rgba(99, 202, 183, 0.15)" : "rgba(99, 202, 183, 0.2)";
             }}
           >
             ⚙️ Settings
           </button>
           <div style={{
             padding: "10px 12px",
-            background: "rgba(99, 202, 183, 0.08)",
+            background: isDark ? "rgba(99, 202, 183, 0.08)" : "rgba(99, 202, 183, 0.1)",
             borderRadius: "8px",
             fontSize: "12px",
-            color: "#8BBDCF",
+            color: isDark ? "#8BBDCF" : "#10A37F",
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            <p>👤 {username}</p>
-            <p style={{ marginTop: "4px", color: "#4A5878" }}>💬 {messages.length} messages</p>
-            <p style={{ marginTop: "4px", color: "#4A5878" }}>⚡ {tokensUsed} tokens</p>
+            <p style={{ margin: 0 }}>👤 {username}</p>
+            <p style={{ marginTop: "4px", color: isDark ? "#4A5878" : "#9ca3af", margin: "4px 0 0 0" }}>💬 {messages.length} messages</p>
+            <p style={{ marginTop: "4px", color: isDark ? "#4A5878" : "#9ca3af", margin: "4px 0 0 0" }}>⚡ {tokensUsed} tokens</p>
           </div>
         </div>
       </div>
@@ -304,21 +344,22 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
           justifyContent: "center",
           zIndex: 1000,
           backdropFilter: "blur(4px)",
+          padding: "16px",
         }}>
           <div style={{
-            background: "rgba(10, 15, 30, 0.95)",
+            background: isDark ? "rgba(10, 15, 30, 0.95)" : "#ffffff",
             borderRadius: "16px",
             padding: "24px",
             maxWidth: "400px",
-            width: "90%",
+            width: "100%",
             boxShadow: "0 0 60px rgba(99,202,183,0.2)",
-            border: "1px solid rgba(99, 202, 183, 0.15)",
+            border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid #e5e5e5",
             backdropFilter: "blur(12px)",
           }}>
             <h2 style={{
               fontSize: "18px",
               fontWeight: "600",
-              color: "#F0F6FF",
+              color: isDark ? "#F0F6FF" : "#1f2937",
               marginBottom: "20px",
               fontFamily: "'Syne', sans-serif",
             }}>Settings</h2>
@@ -330,7 +371,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
                 display: "block",
                 fontSize: "14px",
                 fontWeight: "500",
-                color: "#8BBDCF",
+                color: isDark ? "#8BBDCF" : "#1f2937",
                 marginBottom: "8px",
                 fontFamily: "'DM Sans', sans-serif",
               }}>Username</label>
@@ -341,15 +382,68 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
                 style={{
                   width: "100%",
                   padding: "10px 12px",
-                  border: "1px solid rgba(99, 202, 183, 0.15)",
+                  border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid #e5e5e5",
                   borderRadius: "8px",
                   fontSize: "14px",
                   outline: "none",
-                  color: "#CBD5E8",
-                  background: "rgba(255, 255, 255, 0.02)",
+                  color: isDark ? "#CBD5E8" : "#1f2937",
+                  background: isDark ? "rgba(255, 255, 255, 0.02)" : "#f9fafb",
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               />
+            </div>
+
+            {/* Theme Toggle */}
+            <div style={{
+              marginBottom: "20px",
+            }}>
+              <label style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: isDark ? "#8BBDCF" : "#1f2937",
+                marginBottom: "8px",
+                fontFamily: "'DM Sans', sans-serif",
+              }}>Theme</label>
+              <div style={{
+                display: "flex",
+                gap: "8px",
+              }}>
+                <button
+                  onClick={() => setTheme('dark')}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    background: theme === 'dark' ? "linear-gradient(135deg, #63CAB7, #3B8FD4)" : isDark ? "rgba(99, 202, 183, 0.06)" : "#f0f0f0",
+                    border: theme === 'dark' ? "none" : (isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid #e5e5e5"),
+                    borderRadius: "8px",
+                    color: theme === 'dark' ? "white" : (isDark ? "#8BBDCF" : "#1f2937"),
+                    cursor: "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                  }}
+                >
+                  🌙 Dark
+                </button>
+                <button
+                  onClick={() => setTheme('light')}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    background: theme === 'light' ? "linear-gradient(135deg, #63CAB7, #3B8FD4)" : isDark ? "rgba(99, 202, 183, 0.06)" : "#f0f0f0",
+                    border: theme === 'light' ? "none" : (isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid #e5e5e5"),
+                    borderRadius: "8px",
+                    color: theme === 'light' ? "white" : (isDark ? "#8BBDCF" : "#1f2937"),
+                    cursor: "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                  }}
+                >
+                  ☀️ Light
+                </button>
+              </div>
             </div>
 
             <div style={{
@@ -388,10 +482,10 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen }) {
                 style={{
                   flex: 1,
                   padding: "10px",
-                  background: "rgba(99, 202, 183, 0.06)",
-                  border: "1px solid rgba(99, 202, 183, 0.15)",
+                  background: isDark ? "rgba(99, 202, 183, 0.06)" : "#f0f0f0",
+                  border: isDark ? "1px solid rgba(99, 202, 183, 0.15)" : "1px solid #e5e5e5",
                   borderRadius: "8px",
-                  color: "#8BBDCF",
+                  color: isDark ? "#8BBDCF" : "#1f2937",
                   fontWeight: "500",
                   cursor: "pointer",
                   fontFamily: "'DM Sans', sans-serif",
