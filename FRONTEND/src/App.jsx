@@ -191,6 +191,10 @@ export default function AIChatbot() {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
 
         textarea::-webkit-scrollbar { display: none; }
         .messages-area::-webkit-scrollbar { width: 4px; }
@@ -478,10 +482,19 @@ export default function AIChatbot() {
                   boxShadow: input.trim() && !loading ? "0 0 20px rgba(99,202,183,0.3)" : "none",
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M22 2L11 13" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                {loading ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{
+                    animation: "spin 1s linear infinite",
+                  }}>
+                    <circle cx="12" cy="12" r="10" stroke={isDark ? "#63CAB7" : "#63CAB7"} strokeWidth="2" fill="none" opacity="0.2"/>
+                    <path d="M12 2 A 10 10 0 0 1 22 12" stroke={isDark ? "#63CAB7" : "#63CAB7"} strokeWidth="2" fill="none" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 2L11 13" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
               </button>
             </div>
           </div>
