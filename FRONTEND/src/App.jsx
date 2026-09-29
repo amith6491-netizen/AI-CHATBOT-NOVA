@@ -86,7 +86,7 @@ function Message({ msg, isDark }) {
 }
 
 export default function AIChatbot() {
-  const { messages, addMessage, clearChat, theme } = useChatStore();
+  const { messages, addMessage, clearChat, theme, setTheme } = useChatStore();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -107,7 +107,9 @@ export default function AIChatbot() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, loading]);
 
   const sendMessage = async () => {
@@ -160,9 +162,14 @@ export default function AIChatbot() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        html, body { height: 100%; width: 100%; overflow: hidden; }
+        html, body, #root {
+          height: 100%;
+          height: 100dvh;
+          width: 100%;
+          overflow: hidden;
+        }
 
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
@@ -194,18 +201,26 @@ export default function AIChatbot() {
         .send-btn:active { transform: scale(0.97); }
         .suggestion-chip:hover { background: rgba(99,202,183,0.12) !important; border-color: rgba(99,202,183,0.4) !important; transform: translateY(-1px); }
 
+        .mobile-hamburger-btn {
+          display: none;
+        }
         @media (max-width: 768px) {
+          .mobile-hamburger-btn {
+            display: inline-flex !important;
+          }
           .hide-on-mobile { display: none !important; }
         }
       `}</style>
 
       <div style={{
         display: "flex",
-        height: "100vh",
-        width: "100vw",
+        height: "100%",
+        height: "100dvh",
+        width: "100%",
         background: isDark ? "#080D1A" : "#f5f5f5",
         fontFamily: "'DM Sans', sans-serif",
         overflow: "hidden",
+        position: "relative",
       }}>
         {/* Sidebar */}
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isDark={isDark} />
@@ -218,6 +233,8 @@ export default function AIChatbot() {
           background: isDark ? "#080D1A" : "#ffffff",
           position: "relative",
           overflow: "hidden",
+          height: "100%",
+          width: "100%",
         }}>
           {/* Background Orbs */}
           {isDark && (
@@ -239,25 +256,33 @@ export default function AIChatbot() {
 
           {/* Header - Fixed at top center */}
           <div style={{
-            padding: "16px 20px",
+            padding: "12px 16px",
             borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e5e5e5",
-            background: isDark ? "rgba(255,255,255,0.02)" : "#ffffff",
+            background: isDark ? "rgba(8,13,26,0.92)" : "rgba(255,255,255,0.95)",
+            backdropFilter: "blur(10px)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            zIndex: 10,
-            position: "sticky",
-            top: 0,
+            zIndex: 20,
+            flexShrink: 0,
+            position: "relative",
+            width: "100%",
           }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
               <button
+                className="mobile-hamburger-btn"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 style={{
-                  background: "none",
-                  border: "none",
+                  background: isDark ? "rgba(255,255,255,0.05)" : "#f3f4f6",
+                  border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  padding: "8px 11px",
                   cursor: "pointer",
-                  fontSize: "20px",
+                  fontSize: "18px",
+                  lineHeight: 1,
                   color: isDark ? "#CBD5E8" : "#1f2937",
-                  display: window.innerWidth <= 768 ? "block" : "none",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
+                aria-label="Toggle Menu"
               >
                 ☰
               </button>
@@ -265,23 +290,23 @@ export default function AIChatbot() {
 
             {/* Center Title */}
             <div style={{
-              flex: 1,
+              flex: 2,
               textAlign: "center",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}>
               <div style={{
-                width: 40, height: 40, borderRadius: "12px",
+                width: 36, height: 36, borderRadius: "10px",
                 background: "linear-gradient(135deg, #63CAB7 0%, #3B8FD4 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 18, fontWeight: 800,
+                fontSize: 16, fontWeight: 800,
                 color: "#0A0F1E",
                 fontFamily: "'Syne', sans-serif",
-                boxShadow: "0 0 24px rgba(99,202,183,0.4)",
+                boxShadow: "0 0 18px rgba(99,202,183,0.35)",
               }}>N</div>
-              <div>
+              <div style={{ textAlign: "left" }}>
                 <div style={{
-                  fontSize: 18, fontWeight: 700, color: isDark ? "#F0F6FF" : "#1f2937",
-                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 16, fontWeight: 700, color: isDark ? "#F0F6FF" : "#1f2937",
+                  fontFamily: "'Syne', sans-serif", lineHeight: 1.1,
                 }}>NOVA</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                   <div style={{
@@ -295,15 +320,30 @@ export default function AIChatbot() {
               </div>
             </div>
 
-            {/* Right - Clear Button */}
-            <div style={{ flex: 1, textAlign: "right" }}>
+            {/* Right - Theme toggle & Clear Button */}
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                style={{
+                  background: isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6",
+                  border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
+                  borderRadius: 8, padding: "7px 9px", cursor: "pointer",
+                  fontSize: 13, lineHeight: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s",
+                }}
+                title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDark ? "☀️" : "🌙"}
+              </button>
               <button
                 onClick={() => clearChat()}
                 style={{
-                  background: isDark ? "rgba(255,255,255,0.04)" : "#f0f0f0",
-                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e5e5",
-                  borderRadius: 8, padding: "8px 12px", cursor: "pointer",
-                  color: isDark ? "#8899B4" : "#6b7280", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                  background: isDark ? "rgba(255,255,255,0.04)" : "#f3f4f6",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e7eb",
+                  borderRadius: 8, padding: "7px 11px", cursor: "pointer",
+                  color: isDark ? "#8899B4" : "#4b5563", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 500,
                   transition: "all 0.2s",
                 }}
               >Clear</button>
@@ -313,11 +353,12 @@ export default function AIChatbot() {
           {/* Messages Container - Centered */}
           <div className="messages-area" ref={chatRef} style={{
             flex: 1, overflowY: "auto",
-            padding: "24px 20px",
+            padding: "20px 16px",
             display: "flex", flexDirection: "column",
             zIndex: 5,
             background: isDark ? "transparent" : "#ffffff",
             alignItems: "center",
+            width: "100%",
           }}>
             {/* Content wrapper - max width */}
             <div style={{
@@ -327,26 +368,28 @@ export default function AIChatbot() {
               flexDirection: "column",
             }}>
               {messages.length === 0 && (
-                <div style={{ marginBottom: 24, textAlign: "center", width: "100%" }}>
+                <div style={{ marginBottom: 24, textAlign: "center", width: "100%", paddingTop: "10px" }}>
                   <h2 style={{
-                    fontSize: "28px",
+                    fontSize: "26px",
                     fontWeight: "600",
                     color: isDark ? "#F0F6FF" : "#1f2937",
-                    marginBottom: "12px",
+                    marginBottom: "8px",
                     fontFamily: "'Syne', sans-serif",
                   }}>Welcome to NOVA</h2>
-                  <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 14, marginBottom: 20 }}>Start a conversation with your AI assistant</p>
-                  <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 12, marginBottom: 24, textTransform: "uppercase", letterSpacing: "1px" }}>Try asking</p>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: "400px", margin: "0 auto" }}>
+                  <p style={{ color: isDark ? "#4A5878" : "#6b7280", fontSize: 14, marginBottom: 16 }}>Start a conversation with your AI assistant</p>
+                  <p style={{ color: isDark ? "#4A5878" : "#9ca3af", fontSize: 11, marginBottom: 16, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 600 }}>Try asking</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: "420px", margin: "0 auto" }}>
                     {suggestions.map(s => (
                       <button key={s}
+                        className="suggestion-chip"
                         onClick={() => { setInput(s); inputRef.current?.focus(); }}
                         style={{
-                          background: isDark ? "rgba(99,202,183,0.06)" : "rgba(99,202,183,0.1)",
-                          border: isDark ? "1px solid rgba(99,202,183,0.2)" : "1px solid rgba(99,202,183,0.3)",
-                          borderRadius: 12, padding: "12px", cursor: "pointer",
-                          color: isDark ? "#8BBDCF" : "#10A37F", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+                          background: isDark ? "rgba(99,202,183,0.06)" : "#f0fdf4",
+                          border: isDark ? "1px solid rgba(99,202,183,0.2)" : "1px solid #bbf7d0",
+                          borderRadius: 12, padding: "10px 12px", cursor: "pointer",
+                          color: isDark ? "#8BBDCF" : "#0f766e", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif",
                           transition: "all 0.2s",
+                          lineHeight: 1.3,
                         }}>{s}</button>
                     ))}
                   </div>
@@ -381,20 +424,21 @@ export default function AIChatbot() {
 
           {/* Input Area - Fixed at bottom */}
           <div style={{
-            padding: "12px 20px 16px",
+            padding: "10px 16px 14px",
             borderTop: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e5e5e5",
-            background: isDark ? "rgba(0,0,0,0.15)" : "#f9fafb",
+            background: isDark ? "rgba(8,13,26,0.92)" : "rgba(249,250,251,0.95)",
+            backdropFilter: "blur(10px)",
             zIndex: 10,
-            position: "sticky",
-            bottom: 0,
+            flexShrink: 0,
             display: "flex",
             justifyContent: "center",
+            width: "100%",
           }}>
             <div style={{
-              display: "flex", alignItems: "flex-end", gap: 10,
+              display: "flex", alignItems: "flex-end", gap: 8,
               background: isDark ? "rgba(255,255,255,0.04)" : "#ffffff",
-              border: isDark ? "1px solid rgba(99,202,183,0.15)" : "1px solid #e5e5e5",
-              borderRadius: 12, padding: "10px 12px",
+              border: isDark ? "1px solid rgba(99,202,183,0.18)" : "1px solid #d1d5db",
+              borderRadius: 12, padding: "8px 12px",
               transition: "border-color 0.2s",
               maxWidth: "800px",
               width: "100%",
@@ -409,7 +453,7 @@ export default function AIChatbot() {
                 style={{
                   flex: 1, background: "none", border: "none", outline: "none",
                   color: isDark ? "#CBD5E8" : "#1f2937", fontSize: 14, resize: "none",
-                  fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5,
+                  fontFamily: "'DM Sans', sans-serif", lineHeight: 1.4,
                   maxHeight: 100, overflow: "auto",
                   caretColor: "#63CAB7",
                 }}
@@ -423,10 +467,11 @@ export default function AIChatbot() {
                 onClick={sendMessage}
                 disabled={!input.trim() || loading}
                 style={{
-                  width: 36, height: 36, borderRadius: 10, border: "none",
+                  width: 36, height: 36, borderRadius: 10,
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e7eb",
                   background: input.trim() && !loading
                     ? "linear-gradient(135deg, #63CAB7, #3B8FD4)"
-                    : isDark ? "rgba(255,255,255,0.06)" : "#f0f0f0",
+                    : isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6",
                   cursor: input.trim() && !loading ? "pointer" : "not-allowed",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0, transition: "all 0.2s",
@@ -434,8 +479,8 @@ export default function AIChatbot() {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M22 2L11 13" stroke={input.trim() && !loading ? "#0A0F1E" : "#999"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={input.trim() && !loading ? "#0A0F1E" : "#999"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M22 2L11 13" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={input.trim() && !loading ? "#0A0F1E" : (isDark ? "#4A5878" : "#9ca3af")} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             </div>

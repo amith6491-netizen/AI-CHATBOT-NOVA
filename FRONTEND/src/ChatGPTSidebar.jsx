@@ -121,21 +121,72 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
 
   return (
     <>
-      <div style={{
-        width: sidebarOpen ? "260px" : "0px",
-        background: isDark 
-          ? "linear-gradient(to-bottom, rgba(10, 15, 30, 0.8), rgba(8, 13, 26, 0.9))"
-          : "linear-gradient(to-bottom, #ffffff, #f9fafb)",
-        borderRight: sidebarOpen ? (isDark ? "1px solid rgba(99, 202, 183, 0.12)" : "1px solid #e5e5e5") : "none",
-        display: "flex",
-        flexDirection: "column",
-        transition: "width 0.3s ease",
-        overflow: "hidden",
-        height: "100vh",
-        backdropFilter: "blur(10px)",
-        position: "relative",
-        zIndex: 100,
-      }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar-container-custom {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            height: 100dvh !important;
+            max-width: 82vw !important;
+            box-shadow: 10px 0 35px rgba(0, 0, 0, 0.5) !important;
+            z-index: 1000 !important;
+          }
+          .mobile-sidebar-close {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .sidebar-backdrop {
+            display: none !important;
+          }
+          .mobile-sidebar-close {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(3px)",
+            WebkitBackdropFilter: "blur(3px)",
+            zIndex: 998,
+          }}
+        />
+      )}
+
+      <div
+        className="sidebar-container-custom"
+        style={{
+          width: sidebarOpen ? "270px" : "0px",
+          background: isDark 
+            ? "linear-gradient(180deg, #0e1526 0%, #080d1a 100%)"
+            : "linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)",
+          borderRight: sidebarOpen ? (isDark ? "1px solid rgba(99, 202, 183, 0.12)" : "1px solid #e5e5e5") : "none",
+          display: "flex",
+          flexDirection: "column",
+          transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          overflow: "hidden",
+          height: "100%",
+          height: "100dvh",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          position: "relative",
+          zIndex: 100,
+          flexShrink: 0,
+        }}
+      >
         {/* Header */}
         <div style={{
           padding: "16px",
@@ -143,6 +194,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexShrink: 0,
         }}>
           <h2 style={{
             fontSize: "16px",
@@ -151,16 +203,22 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
             fontFamily: "'Syne', sans-serif",
           }}>NOVA</h2>
           <button
+            className="mobile-sidebar-close"
             onClick={() => setSidebarOpen(false)}
             style={{
-              background: "none",
-              border: "none",
+              background: isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6",
+              border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
+              borderRadius: "6px",
+              padding: "4px 8px",
               cursor: "pointer",
-              fontSize: "18px",
+              fontSize: "16px",
+              lineHeight: 1,
               color: isDark ? "#8899B4" : "#6b7280",
               transition: "color 0.2s",
-              display: window.innerWidth <= 768 ? "block" : "none",
+              alignItems: "center",
+              justifyContent: "center",
             }}
+            title="Close menu"
           >
             ✕
           </button>
@@ -168,7 +226,10 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
 
         {/* New Chat Button */}
         <button
-          onClick={() => clearChat()}
+          onClick={() => {
+            clearChat();
+            if (window.innerWidth <= 768) setSidebarOpen(false);
+          }}
           style={{
             margin: "16px",
             padding: "12px 16px",
@@ -181,6 +242,7 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
             color: isDark ? "#8BBDCF" : "#10A37F",
             transition: "all 0.2s",
             fontFamily: "'DM Sans', sans-serif",
+            flexShrink: 0,
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.background = isDark ? "rgba(99, 202, 183, 0.12)" : "rgba(99, 202, 183, 0.15)";
@@ -300,7 +362,10 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
             conversations.map((conv) => (
               <button
                 key={conv.id}
-                onClick={() => loadConversation(conv.id)}
+                onClick={() => {
+                  loadConversation(conv.id);
+                  if (window.innerWidth <= 768) setSidebarOpen(false);
+                }}
                 style={{
                   width: "100%",
                   textAlign: "left",
