@@ -51,7 +51,7 @@ function Message({ msg, isDark }) {
     <div style={{
       display: "flex",
       justifyContent: isUser ? "flex-end" : "flex-start",
-      marginBottom: "16px",
+      marginBottom: "8px",
       animation: "fadeSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
       maxWidth: "100%",
     }}>
@@ -68,7 +68,7 @@ function Message({ msg, isDark }) {
       )}
       <div style={{
         maxWidth: "85%",
-        padding: "13px 18px",
+        padding: "10px 14px",
         background: isUser
           ? "linear-gradient(135deg, #3B8FD4, #2A6CB8)"
           : isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",

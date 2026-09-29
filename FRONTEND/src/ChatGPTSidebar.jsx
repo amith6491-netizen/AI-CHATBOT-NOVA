@@ -72,10 +72,12 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
 
       const pageWidth = 210;
       const pageHeight = 297;
-      const marginX = 16;
-      const contentWidth = pageWidth - marginX * 2; // 178 mm
-      const topMargin = 20;
-      const bottomLimit = pageHeight - 20; // 277 mm
+      const marginX = 10; // 1cm margin
+      const marginTop = 10; // 1cm top margin
+      const marginBottom = 10; // 1cm bottom margin
+      const contentWidth = pageWidth - marginX * 2; // 190 mm
+      const topMargin = marginTop + 18; // Account for header
+      const bottomLimit = pageHeight - marginBottom; // 287 mm
       const lineHeight = 5.2;
       const padX = 5;
       const padY = 4;
@@ -83,22 +85,22 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
 
       // Header on Page 1
       pdf.setFillColor(15, 23, 42); // Dark slate
-      pdf.rect(0, 0, pageWidth, 28, 'F');
+      pdf.rect(0, marginTop, pageWidth, 28, 'F');
       pdf.setFillColor(99, 202, 183); // Teal
-      pdf.rect(0, 28, pageWidth, 2, 'F');
+      pdf.rect(0, marginTop + 28, pageWidth, 2, 'F');
 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(15);
       pdf.setTextColor(240, 246, 255);
-      pdf.text('NOVA AI CONVERSATION TRANSCRIPT', marginX, 13);
+      pdf.text('NOVA AI CONVERSATION TRANSCRIPT', marginX, marginTop + 13);
 
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
       pdf.setTextColor(148, 163, 184);
       const dateStr = new Date().toLocaleString();
-      pdf.text(`Exported: ${dateStr}   |   User: ${username || 'User'}   |   Messages: ${messages.length}`, marginX, 21);
+      pdf.text(`Exported: ${dateStr}   |   User: ${username || 'User'}   |   Messages: ${messages.length}`, marginX, marginTop + 21);
 
-      let currentY = 38;
+      let currentY = marginTop + 38;
 
       const drawCard = (y, lines, label, isUserMsg) => {
         const cardH = padY * 2 + 7 + lines.length * lineHeight;
