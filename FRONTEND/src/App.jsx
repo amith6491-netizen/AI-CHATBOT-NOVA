@@ -27,6 +27,26 @@ function TypingIndicator({ isDark }) {
 
 function Message({ msg, isDark }) {
   const isUser = msg.role === "user";
+  
+  // Clean up markdown and special characters
+  let cleanContent = msg.content
+    .replace(/\\n/g, '\n')  // Convert escaped newlines to actual newlines
+    .replace(/\\t/g, '  ')  // Convert escaped tabs to spaces
+    .replace(/\\r/g, '')    // Remove carriage returns
+    .replace(/\*\*\*/g, '')  // Remove bold-italic markers
+    .replace(/\*\*/g, '')    // Remove bold markers
+    .replace(/\*(?!\s)/g, '') // Remove single asterisks (but keep bullet points)
+    .replace(/__(.*?)__/g, '$1')  // Replace __text__ with just text
+    .replace(/__/g, '')  // Remove remaining underscores used for formatting
+    .replace(/^#+\s/gm, '') // Remove markdown headers (#, ##, etc.)
+    .replace(/^```[\s\S]*?```/gm, '') // Remove code blocks
+    .replace(/`([^`]+)`/g, '$1') // Remove inline code backticks
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert markdown links to plain text
+    .replace(/^-\s/gm, '• ') // Convert markdown lists to bullets
+    .replace(/^\|.*\|$/gm, '') // Remove markdown tables
+    .replace(/_{2,}/g, '') // Remove multiple underscores
+    .trim();
+  
   return (
     <div style={{
       display: "flex",
@@ -69,7 +89,8 @@ function Message({ msg, isDark }) {
           lineHeight: 1.65,
           fontFamily: "'DM Sans', sans-serif",
           whiteSpace: "pre-wrap",
-        }}>{msg.content}</p>
+          wordBreak: "break-word",
+        }}>{cleanContent}</p>
       </div>
       {isUser && (
         <div style={{
