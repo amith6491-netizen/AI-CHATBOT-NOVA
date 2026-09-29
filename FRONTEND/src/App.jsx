@@ -28,23 +28,21 @@ function TypingIndicator({ isDark }) {
 function Message({ msg, isDark }) {
   const isUser = msg.role === "user";
   
-  // Clean up markdown and special characters
+  // Clean up markdown formatting but preserve table structure and content
   let cleanContent = msg.content
-    .replace(/\\n/g, '\n')  // Convert escaped newlines to actual newlines
-    .replace(/\\t/g, '  ')  // Convert escaped tabs to spaces
+    .replace(/\\n/g, '\n')  // Convert escaped newlines
+    .replace(/\\t/g, '  ')  // Convert escaped tabs
     .replace(/\\r/g, '')    // Remove carriage returns
-    .replace(/\*\*\*/g, '')  // Remove bold-italic markers
-    .replace(/\*\*/g, '')    // Remove bold markers
-    .replace(/\*(?!\s)/g, '') // Remove single asterisks (but keep bullet points)
-    .replace(/__(.*?)__/g, '$1')  // Replace __text__ with just text
-    .replace(/__/g, '')  // Remove remaining underscores used for formatting
-    .replace(/^#+\s/gm, '') // Remove markdown headers (#, ##, etc.)
-    .replace(/^```[\s\S]*?```/gm, '') // Remove code blocks
-    .replace(/`([^`]+)`/g, '$1') // Remove inline code backticks
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert markdown links to plain text
-    .replace(/^-\s/gm, '• ') // Convert markdown lists to bullets
-    .replace(/^\|.*\|$/gm, '') // Remove markdown tables
-    .replace(/_{2,}/g, '') // Remove multiple underscores
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')  // Remove bold-italic but keep text
+    .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold but keep text
+    .replace(/\*(.+?)\*/g, '$1')  // Remove italic but keep text
+    .replace(/__(.+?)__/g, '$1')  // Remove bold underscores but keep text
+    .replace(/_(.+?)_/g, '$1')  // Remove italic underscores but keep text
+    .replace(/`(.+?)`/g, '$1')  // Remove backticks but keep code text
+    .replace(/^#+\s+/gm, '')  // Remove header symbols but keep text
+    .replace(/\[(.+?)\]\((.+?)\)/g, '$1')  // Convert links to plain text
+    .replace(/^-{3,}$/gm, '─────────')  // Convert markdown dividers to readable line
+    .replace(/^(\s*)[-*]\s+/gm, '$1• ')  // Keep bullet points but clean up
     .trim();
   
   return (
