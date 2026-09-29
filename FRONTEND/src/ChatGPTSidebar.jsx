@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useChatStore } from './store';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) {
   const {
@@ -24,89 +23,195 @@ export default function ChatGPTSidebar({ sidebarOpen, setSidebarOpen, isDark }) 
     loadConversations();
   }, []);
 
-  const exportToPDF = async () => {
-    const chatElement = document.querySelector('.messages-area');
-    if (!chatElement) return;
+  const cleanMarkdownForPDF = (rawText) => {
+    if (!rawText) return '';
+    let text = rawText
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '  ')
+      .replace(/\r/g, '');
+
+    const rawLines = text.split('\n');
+    const processedLines = [];
+
+    for (let line of rawLines) {
+      let l = line.trimEnd();
+      // Headers
+      if (/^#{1,6}\s+/.test(l)) {
+        l = l.replace(/^#{1,6}\s+/, '').toUpperCase();
+      }
+      // Bullet lists
+      else if (/^\s*[-*]\s+/.test(l)) {
+        l = l.replace(/^\s*[-*]\s+/, '• ');
+      }
+      // Strip markdown asterisks and backticks
+      l = l.replace(/\*\*\*(.*?)\*\*\*/g, '$1');
+      l = l.replace(/\*\*(.*?)\*\*/g, '$1');
+      l = l.replace(/\*(.*?)\*/g, '$1');
+      l = l.replace(/__(.*?)__/g, '$1');
+      l = l.replace(/_(.*?)_/g, '$1');
+      l = l.replace(/`([^`]+)`/g, '$1');
+      l = l.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      processedLines.push(l);
+    }
+    return processedLines.join('\n');
+  };
+
+  const exportToPDF = () => {
+    if (!messages || messages.length === 0) {
+      alert('No messages to export.');
+      return;
+    }
 
     try {
-      // Create a temporary container with white background and black text
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.width = chatElement.offsetWidth + 'px';
-      tempDiv.style.padding = '20px';
-      tempDiv.style.backgroundColor = '#ffffff';
-      tempDiv.style.color = '#000000';
-      tempDiv.style.fontFamily = "'DM Sans', sans-serif";
-      tempDiv.style.lineHeight = '1.6';
-      document.body.appendChild(tempDiv);
-
-      // Copy messages with formatting
-      messages.forEach((msg, index) => {
-        const messageDiv = document.createElement('div');
-        messageDiv.style.marginBottom = '16px';
-        messageDiv.style.padding = '12px';
-        messageDiv.style.backgroundColor = msg.role === 'user' ? '#e3f2fd' : '#f5f5f5';
-        messageDiv.style.borderRadius = '8px';
-        messageDiv.style.color = '#000000';
-        messageDiv.style.fontSize = '14px';
-
-        const label = document.createElement('strong');
-        label.style.color = msg.role === 'user' ? '#1976d2' : '#333333';
-        label.textContent = msg.role === 'user' ? 'You: ' : 'NOVA: ';
-        label.style.display = 'block';
-        label.style.marginBottom = '6px';
-
-        const content = document.createElement('div');
-        content.style.whiteSpace = 'pre-wrap';
-        content.style.wordWrap = 'break-word';
-        content.textContent = msg.content;
-        content.style.color = '#000000';
-
-        messageDiv.appendChild(label);
-        messageDiv.appendChild(content);
-        tempDiv.appendChild(messageDiv);
-      });
-
-      // Convert to canvas with white background
-      const canvas = await html2canvas(tempDiv, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-      });
-
-      // Create PDF
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      const imgWidth = 190; // A4 width minus margins
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const marginX = 16;
+      const contentWidth = pageWidth - marginX * 2; // 178 mm
+      const topMargin = 20;
+      const bottomLimit = pageHeight - 20; // 277 mm
+      const lineHeight = 5.2;
+      const padX = 5;
+      const padY = 4;
+      const textWidth = contentWidth - padX * 2 - 4; // 164 mm
 
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-      heightLeft -= 267; // A4 height minus margins
+      // Header on Page 1
+      pdf.setFillColor(15, 23, 42); // Dark slate
+      pdf.rect(0, 0, pageWidth, 28, 'F');
+      pdf.setFillColor(99, 202, 183); // Teal
+      pdf.rect(0, 28, pageWidth, 2, 'F');
 
-      // Add additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-        heightLeft -= 267;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(240, 246, 255);
+      pdf.text('NOVA AI CONVERSATION TRANSCRIPT', marginX, 13);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(148, 163, 184);
+      const dateStr = new Date().toLocaleString();
+      pdf.text(`Exported: ${dateStr}   |   User: ${username || 'User'}   |   Messages: ${messages.length}`, marginX, 21);
+
+      let currentY = 38;
+
+      const drawCard = (y, lines, label, isUserMsg) => {
+        const cardH = padY * 2 + 7 + lines.length * lineHeight;
+
+        // Background
+        if (isUserMsg) {
+          pdf.setFillColor(239, 246, 255); // Blue-50
+          pdf.setDrawColor(191, 219, 254); // Blue-200
+        } else {
+          pdf.setFillColor(248, 250, 252); // Slate-50
+          pdf.setDrawColor(226, 232, 240); // Slate-200
+        }
+        pdf.setLineWidth(0.3);
+        pdf.roundedRect(marginX, y, contentWidth, cardH, 3, 3, 'FD');
+
+        // Left accent bar
+        pdf.setFillColor(isUserMsg ? 59 : 99, isUserMsg ? 143 : 202, isUserMsg ? 212 : 183);
+        pdf.roundedRect(marginX, y, 2.5, cardH, 1.2, 1.2, 'F');
+
+        // Role Badge Text
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.setTextColor(isUserMsg ? 30 : 15, isUserMsg ? 64 : 118, isUserMsg ? 175 : 110);
+        pdf.text(label, marginX + padX + 2, y + padY + 4);
+
+        // Subtle divider line
+        pdf.setDrawColor(isUserMsg ? 219 : 226, isUserMsg ? 234 : 232, isUserMsg ? 254 : 240);
+        pdf.setLineWidth(0.2);
+        pdf.line(marginX + padX + 2, y + padY + 6.2, marginX + contentWidth - padX, y + padY + 6.2);
+
+        // Body text
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(30, 41, 59); // Slate-800
+        let textY = y + padY + 7 + 3.8;
+        lines.forEach((l) => {
+          pdf.text(l, marginX + padX + 2, textY);
+          textY += lineHeight;
+        });
+      };
+
+      messages.forEach((msg) => {
+        const isUser = msg.role === 'user';
+        const roleLabel = isUser ? (username ? username.toUpperCase() : 'YOU') : 'NOVA AI';
+        const cleaned = cleanMarkdownForPDF(msg.content);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9.5);
+        const textLines = pdf.splitTextToSize(cleaned, textWidth);
+
+        const headerHeight = 7;
+        const totalBodyHeight = textLines.length * lineHeight;
+        const totalCardHeight = padY * 2 + headerHeight + totalBodyHeight;
+
+        // If whole card fits on current page
+        if (currentY + totalCardHeight <= bottomLimit) {
+          drawCard(currentY, textLines, roleLabel, isUser);
+          currentY += totalCardHeight + 5;
+        } else if (totalCardHeight <= (bottomLimit - topMargin)) {
+          // Card doesn't fit here, but fits completely on a fresh page
+          pdf.addPage();
+          currentY = topMargin;
+          drawCard(currentY, textLines, roleLabel, isUser);
+          currentY += totalCardHeight + 5;
+        } else {
+          // Extremely long message that spans multiple pages
+          if (currentY > 45) {
+            pdf.addPage();
+            currentY = topMargin;
+          }
+
+          let lineIdx = 0;
+          let isContinuation = false;
+
+          while (lineIdx < textLines.length) {
+            const availableSpace = bottomLimit - currentY;
+            const maxLinesPossible = Math.max(1, Math.floor((availableSpace - padY * 2 - headerHeight) / lineHeight));
+            const chunkLines = textLines.slice(lineIdx, lineIdx + maxLinesPossible);
+            const chunkCardHeight = padY * 2 + headerHeight + chunkLines.length * lineHeight;
+
+            const label = isContinuation ? `${roleLabel} (cont.)` : roleLabel;
+            drawCard(currentY, chunkLines, label, isUser);
+            lineIdx += chunkLines.length;
+            currentY += chunkCardHeight + 5;
+
+            if (lineIdx < textLines.length) {
+              pdf.addPage();
+              currentY = topMargin;
+              isContinuation = true;
+            }
+          }
+        }
+      });
+
+      // Add footers with page numbers to all pages
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.2);
+        pdf.line(marginX, 287, marginX + contentWidth, 287);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text('NOVA AI Assistant', marginX, 292);
+        const pageText = `Page ${i} of ${totalPages}`;
+        const pageTextWidth = pdf.getTextWidth(pageText);
+        pdf.text(pageText, marginX + contentWidth - pageTextWidth, 292);
       }
 
-      // Save PDF
-      pdf.save(`NOVA_Chat_${new Date().toLocaleDateString()}.pdf`);
-
-      // Clean up
-      document.body.removeChild(tempDiv);
+      const safeDate = new Date().toISOString().slice(0, 10);
+      pdf.save(`NOVA_Chat_${safeDate}.pdf`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
       alert('Error exporting PDF. Please try again.');
