@@ -102,6 +102,9 @@ def chat():
 
         result = response.json()
         reply = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        
+        # Clean up the reply - ensure proper formatting
+        reply = reply.replace('\\n', '\n').replace('\\t', '\t')
 
         if not reply:
             return jsonify({"error": "Groq returned an empty response"}), 502
